@@ -71,7 +71,8 @@ export function resolveShot(hole, from, lie, input) {
   for (let i = 1; i <= steps; i++) {
     const t = Math.min(i * PLAY.rollStep, rollLen);
     const x = lx + ux * t, y = ly + uy * t;
-    if ((x - cup[0]) * (x - cup[0]) + (y - cup[1]) * (y - cup[1]) <= cap2) return out('holed', [cup[0], cup[1]], 'green', landSurface, t);
+    // The cup only takes a ball that is nearly out of roll; a fast one runs over it.
+    if (rollLen - t <= PLAY.captureTail && (x - cup[0]) * (x - cup[0]) + (y - cup[1]) * (y - cup[1]) <= cap2) return out('holed', [cup[0], cup[1]], 'green', landSurface, t);
     const s = surfaceAt(hole, x, y);
     if (s === 'ob') return out('ob', [x, y], lie, landSurface, t);
     if (s === 'water') return out('water', [x, y], lie, landSurface, t);

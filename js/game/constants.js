@@ -15,18 +15,18 @@ export const CLUBS = {
   driver: {
     name: 'Driver',
     maxCarry: 250,     // carry at 100% power from a tee or fairway lie
-    aimSweepMs: 900,   // time for the aim arrow to cross from one extreme to the other
+    aimSweepMs: 725,   // time for the aim arrow to cross from one extreme to the other
     rollK: 0.12,       // roll-out as a fraction of carry on a firmness-1 surface
     windSens: 1.0,     // multiplier on the wind effect
   },
-  iron: { name: 'Iron', maxCarry: 160, aimSweepMs: 1100, rollK: 0.07, windSens: 0.8 },
-  wedge: { name: 'Wedge', maxCarry: 90, aimSweepMs: 1300, rollK: 0.03, windSens: 0.6 },
+  iron: { name: 'Iron', maxCarry: 160, aimSweepMs: 1000, rollK: 0.07, windSens: 0.8 },
+  wedge: { name: 'Wedge', maxCarry: 90, aimSweepMs: 1200, rollK: 0.03, windSens: 0.6 },
 };
 
 // Carry multiplier by lie and club. Tee and fairway are the baseline.
 export const LIE_DIST = {
   tee: { driver: 1, iron: 1, wedge: 1 },
-  fairway: { driver: 1, iron: 1, wedge: 1 },
+  fairway: { driver: 0.8, iron: 1, wedge: 1 },
   rough: { driver: 0.7, iron: 0.8, wedge: 0.8 },
   bunker: { driver: 0.35, iron: 0.5, wedge: 0.75 },
 };
@@ -47,7 +47,8 @@ export const PLAY = {
   windAlongMax: 0.12,    // carry change (fraction of carry) for a 20 mph head/tail wind, driver
   windCrossMax: 0.12,    // sideways drift (fraction of carry) for a 20 mph crosswind, driver
   rollStep: 0.25,        // sampling step along the roll path
-  captureRadius: 1.0,    // ball within this of the cup while landing/rolling is holed
+  captureRadius: 0.4,    // ball within this of the cup is holed, if it lands there or is rolling slowly
+  captureTail: 3,        // "slowly" = within this many yards of the end of its roll (a fast ball rolls over)
   strokeCap: 12,         // auto pick-up at this many strokes
   angleUnitsPerDeg: 10,  // logged angle is an integer in 0.1 degree steps
   powerUnits: 200,       // logged power is an integer in 0.5% steps (200 = 100%)
@@ -59,7 +60,7 @@ export const PLAY = {
 
 export const METER = {
   aimHalfDeg: 40,        // the aim arrow sweeps +/- this around the sweep centre
-  powerSweepMs: 1000,    // time for the power bar to go 0 -> 100%
+  powerSweepMs: 900,    // time for the power bar to go 0 -> 100%
   powerSnap: 0.97,       // power at or above this snaps to 100%
   powerDelayMs: 350,     // pause between the aim lock and the power bar starting
   assistFactor: 1.5,     // Endless-only assist: meters take this many times longer
@@ -115,7 +116,7 @@ export const GEN = {
     gap: [12, 28],           // ... by this much (from the green edge)
     capLen: 12,              // length of the rounded fairway ends
     greenNeck: 0.7,          // fairway half-width at the green, as a fraction of green radius
-    rough: [18, 45],         // rough band per side, hard to easy
+    rough: [15, 36],         // rough band per side, hard to easy
     obNoise: 0.12,           // +/- low-frequency noise on the OB line (fraction of rough band)
     obWavelength: 110,
     minRough: 8,             // rough band never thinner than this (inside of doglegs)
@@ -141,8 +142,8 @@ export const GEN = {
     harm3: 0.12,             // amplitude of the 3rd radius harmonic (pear/kidney)
     pinFrac: [0.55, 0.8],    // cup this fraction of the way to the edge
     pinEdgeMin: 3,           // cup at least this far inside the edge
-    ring1: 0.2,              // 1-putt ring radius, fraction of green radius
-    ring2: 0.5,              // 2-putt ring radius, fraction of green radius
+    ring1: 0.19,              // 1-putt ring radius, fraction of green radius
+    ring2: 0.4,              // 2-putt ring radius, fraction of green radius
     shortSideChance: 0.25,   // of holes with greenside hazards
     shortSide: [4, 6],       // short-sided cup distance to the hazard
     cupHazardMin: 8,         // otherwise the cup stays this far from hazards
