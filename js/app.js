@@ -1377,6 +1377,7 @@ function switchView(v) {
     guide: ['How this app works', 'A guide to the estimate, course ratings, slope, and your score window.'],
   };
   document.body.classList.toggle('on-play', v === 'play');
+  $('pageActions').hidden = v === 'friends';
   if (v === 'play' && session) showPlay(session.user, { openFriends: () => switchView('friends') });
   else hidePlay();
   if (v === 'friends' && session) showFriends();

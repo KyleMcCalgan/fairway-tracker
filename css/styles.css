@@ -156,6 +156,9 @@ button:disabled {
   gap: 9px;
   flex-wrap: wrap;
 }
+.top .actions[hidden] {
+  display: none;
+}
 .btn {
   background: #fff;
   border: 1px solid #d9e6dc;
