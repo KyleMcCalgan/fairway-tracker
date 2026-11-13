@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,">
+<title>HANDI Golf: hole gallery</title>
+<style>
+  :root { color-scheme: light dark; --bg: #f4f5f2; --fg: #1b1f1c; --muted: #5b655d; --card: #fff; --line: #d5dad4; --accent: #1f7a3d; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #151916; --fg: #e9ede8; --muted: #9aa69c; --card: #1e2420; --line: #343c36; --accent: #6fcf8a; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 14px/1.4 system-ui, sans-serif; background: var(--bg); color: var(--fg); }
+  header { padding: 12px 16px; display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: end; border-bottom: 1px solid var(--line); }
+  h1 { font-size: 18px; margin: 0 auto 0 0; }
+  label { display: grid; gap: 2px; font-size: 12px; color: var(--muted); }
+  input, select, button { font: inherit; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--card); color: var(--fg); }
+  button { cursor: pointer; }
+  button:focus-visible, input:focus-visible, select:focus-visible, .tile:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  #summary { padding: 8px 16px; color: var(--muted); font-size: 12px; }
+  #grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; padding: 0 16px 24px; }
+  .tile { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 0; text-align: left; overflow: hidden; }
+  .tile canvas { display: block; width: 100%; height: 280px; }
+  .cap { padding: 6px 8px; font-size: 12px; }
+  .cap b { font-size: 13px; }
+  .cap span { color: var(--muted); display: block; overflow-wrap: anywhere; }
+  .bad { color: #d6453d; }
+  dialog { border: 1px solid var(--line); border-radius: 10px; background: var(--card); color: var(--fg); padding: 12px; max-width: min(96vw, 720px); }
+  dialog canvas { display: block; width: min(90vw, 680px); height: min(78vh, 900px); }
+  dialog::backdrop { background: rgba(0,0,0,0.5); }
+  .row { display: flex; gap: 8px; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>HANDI Golf: hole gallery</h1>
+  <label>Base seed <input id="base" value="gallery" size="12"></label>
+  <label>Tiles <select id="count"><option>24</option><option selected>36</option><option>48</option></select></label>
+  <label>Par <select id="par"><option value="">any</option><option>3</option><option>4</option><option>5</option></select></label>
+  <button id="go">Generate</button>
+  <button id="rand">Random base</button>
+  <label>Replay one seed <input id="one" placeholder="seed" size="14"></label>
+  <button id="show">Show</button>
+</header>
+<div id="summary" role="status"></div>
+<div id="grid"></div>
+<dialog id="big" aria-labelledby="bigTitle">
+  <div class="row"><b id="bigTitle"></b><button id="close">Close</button></div>
+  <canvas id="bigCanvas"></canvas>
+  <div class="cap" id="bigCap"></div>
+</dialog>
+<script type="module">
+import { generateHole, generationReport } from '../js/game/generate.js';
+import { validateHole } from '../js/game/validate.js';
+import { drawHole, holeView, setupCanvas } from '../js/game/render.js';
+
+const $ = (id) => document.getElementById(id);
+const q = new URLSearchParams(location.search);
+if (q.get('base')) $('base').value = q.get('base');
+if (q.get('n')) $('count').value = q.get('n');
+if (q.get('par')) $('par').value = q.get('par');
+
+const arrows = ['↑', '↗', '→', '↘', '↓', '↙', '←', '↖'];
+function caption(hole) {
+  const v = validateHole(hole);
+  const kinds = {};
+  for (const b of hole.bunkers) kinds[b.kind] = (kinds[b.kind] || 0) + 1;
+  for (const w of hole.water) kinds[w.kind] = (kinds[w.kind] || 0) + 1;
+  const list = Object.entries(kinds).map(([k, n]) => (n > 1 ? n + ' ' : '') + k).join(', ') || 'no hazards';
+  const wind = hole.wind.mph + ' mph ' + arrows[Math.round(hole.wind.dirDeg / 45) % 8];
+  return '<b>Par ' + hole.par + ' · ' + hole.lengthYds + ' yds</b>'
+    + '<span>' + hole.meta.archetype + (hole.meta.shortSided ? ' · short-sided pin' : '') + ' · wind ' + wind + '</span>'
+    + '<span>Bunkers ' + hole.bunkers.length + ' · water ' + hole.water.length + ' · ' + list + '</span>'
+    + '<span>seed ' + hole.seed + (hole.meta.attempt ? ' (attempt ' + hole.meta.attempt + ')' : '') + (hole.meta.fallback ? ' FALLBACK' : '') + '</span>'
+    + (v.ok ? '' : '<span class="bad">INVALID: ' + v.errors.join(', ') + '</span>');
+}
+
+function paint(canvas, hole, rings) {
+  const r = canvas.getBoundingClientRect();
+  const ctx = setupCanvas(canvas, r.width, r.height);
+  drawHole(ctx, hole, holeView(hole, r.width, r.height, 8), { rings });
+}
+
+function opts() {
+  const par = Number($('par').value);
+  return par ? { par } : {};
+}
+
+function build() {
+  const base = $('base').value || 'gallery';
+  const n = Number($('count').value);
+  const grid = $('grid');
+  grid.textContent = '';
+  const t0 = performance.now();
+  let retries = 0, fallbacks = 0, invalid = 0;
+  for (let i = 1; i <= n; i++) {
+    const seed = base + '-' + i;
+    const hole = generateHole(seed, opts());
+    retries += hole.meta.attempt;
+    if (hole.meta.fallback) fallbacks++;
+    if (!validateHole(hole).ok) invalid++;
+    const tile = document.createElement('button');
+    tile.className = 'tile';
+    tile.setAttribute('aria-label', 'Hole ' + seed + ', par ' + hole.par + ', ' + hole.lengthYds + ' yards. Open large view.');
+    const canvas = document.createElement('canvas');
+    const cap = document.createElement('div');
+    cap.className = 'cap';
+    cap.innerHTML = caption(hole);
+    tile.append(canvas, cap);
+    tile.addEventListener('click', () => showBig(seed));
+    grid.append(tile);
+    paint(canvas, hole, false);
+  }
+  $('summary').textContent = n + ' holes from base seed "' + base + '" in ' + Math.round(performance.now() - t0)
+    + ' ms · ' + retries + ' regeneration retries · ' + fallbacks + ' fallbacks · ' + invalid + ' invalid';
+}
+
+function showBig(seed) {
+  const hole = generateHole(seed, opts());
+  const rep = generationReport(seed, opts());
+  $('bigTitle').textContent = 'Seed ' + seed;
+  $('bigCap').innerHTML = caption(hole) + (rep.failures.length ? '<span>earlier attempts failed: ' + rep.failures.map((f) => f.join('+')).join(' / ') + '</span>' : '');
+  if (!$('big').open) $('big').showModal();
+  paint($('bigCanvas'), hole, true);
+}
+
+$('go').addEventListener('click', build);
+$('rand').addEventListener('click', () => {
+  const a = new Uint32Array(1);
+  crypto.getRandomValues(a);
+  $('base').value = a[0].toString(36);
+  build();
+});
+$('show').addEventListener('click', () => { if ($('one').value) showBig($('one').value); });
+$('one').addEventListener('keydown', (e) => { if (e.key === 'Enter' && $('one').value) showBig($('one').value); });
+$('close').addEventListener('click', () => $('big').close());
+let timer = 0;
+addEventListener('resize', () => { clearTimeout(timer); timer = setTimeout(build, 150); });
+build();
+if (q.get('seed')) { $('one').value = q.get('seed'); showBig(q.get('seed')); }
+</script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+{
+  "name": "handi-golf",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "balance": "node tools/balance.mjs"
+  }
+}
