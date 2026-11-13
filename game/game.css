@@ -264,14 +264,21 @@
 
 /* --- Controls ------------------------------------------------------------- */
 
-.hg-controls { padding: 10px 12px 12px; display: grid; gap: 10px; }
-.hg-clubs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-.hg-club { display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.2; padding: 6px 4px; min-height: 54px; }
+.hg-controls {
+  padding: 8px 10px max(8px, env(safe-area-inset-bottom));
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(90px, 1.3fr);
+  gap: 6px 8px;
+}
+.hg-clubs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; min-width: 0; }
+.hg-club { display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.2; padding: 5px 2px; min-height: 48px; }
 .hg-club-yds { font-size: 12px; font-weight: 500; color: var(--hg-muted); }
 .hg-club[aria-pressed='true'] .hg-club-yds { color: inherit; opacity: 0.85; }
 .hg-swing {
-  min-height: 60px;
-  font-size: 19px;
+  min-height: 48px;
+  padding: 5px 6px;
+  font-size: 14px;
+  line-height: 1.15;
   font-weight: 700;
   border-radius: 14px;
   background: var(--hg-accent);
@@ -279,7 +286,7 @@
   color: var(--hg-accent-fg);
   box-shadow: 0 6px 16px -8px var(--hg-accent);
 }
-.hg-hint { color: var(--hg-muted); font-size: 12px; min-height: 1.35em; text-align: center; }
+.hg-hint { grid-column: 1 / -1; color: var(--hg-muted); font-size: 12px; min-height: 1.35em; text-align: center; }
 
 /* --- Dialogs -------------------------------------------------------------- */
 
