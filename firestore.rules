@@ -94,6 +94,38 @@ service cloud.firestore {
       return name is string && name.size() >= 1 && name.size() <= 24;
     }
 
+    function roundPath(roundId) {
+      return /databases/$(database)/documents/gameRounds/$(roundId);
+    }
+
+    function roundInvitePath(roundId, uid) {
+      return /databases/$(database)/documents/users/$(uid)/gameRounds/$(roundId);
+    }
+
+    function roundParticipant(roundId) {
+      return signedIn() && exists(roundInvitePath(roundId, request.auth.uid));
+    }
+
+    function roundHost(roundId) {
+      return signedIn() && get(roundPath(roundId)).data.hostUid == request.auth.uid;
+    }
+
+    function validRoundStroke(s) {
+      return s is int && s >= 1 && s <= 12;
+    }
+
+    function validRoundScore(d) {
+      return d.keys().hasOnly(['holes', 'total', 'createdAt'])
+        && d.keys().hasAll(['holes', 'total', 'createdAt'])
+        && d.createdAt == request.time
+        && d.holes is list && d.holes.size() == 9
+        && validRoundStroke(d.holes[0]) && validRoundStroke(d.holes[1]) && validRoundStroke(d.holes[2])
+        && validRoundStroke(d.holes[3]) && validRoundStroke(d.holes[4]) && validRoundStroke(d.holes[5])
+        && validRoundStroke(d.holes[6]) && validRoundStroke(d.holes[7]) && validRoundStroke(d.holes[8])
+        && d.total is int && d.total == d.holes[0] + d.holes[1] + d.holes[2]
+          + d.holes[3] + d.holes[4] + d.holes[5] + d.holes[6] + d.holes[7] + d.holes[8];
+    }
+
     function validHole(h) {
       return h is map
         && h.keys().hasOnly(['strokes', 'putts', 'penalties', 'shots'])
@@ -247,6 +279,53 @@ service cloud.firestore {
         allow create, update: if isOwner(uid)
           && request.resource.data.keys().hasOnly(['rating', 'slope'])
           && validValues(request.resource.data);
+      }
+
+      match /gameRounds/{roundId} {
+        allow read, delete: if isOwner(uid);
+        allow create: if roundHost(roundId)
+          && (uid == request.auth.uid || areFriends(uid))
+          && request.resource.data.keys().hasOnly(['hostUid'])
+          && request.resource.data.hostUid == request.auth.uid;
+      }
+    }
+
+    // Invitation membership controls access to a round and its scorecards.
+    match /gameRounds/{roundId} {
+      allow get: if roundParticipant(roundId);
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['title', 'hostUid', 'genVersion', 'pars', 'createdAt'])
+        && request.resource.data.keys().hasAll(['title', 'hostUid', 'genVersion', 'pars', 'createdAt'])
+        && request.resource.data.hostUid == request.auth.uid
+        && request.resource.data.title is string && request.resource.data.title.size() >= 1 && request.resource.data.title.size() <= 60
+        && request.resource.data.genVersion is int && request.resource.data.genVersion >= 1
+        && request.resource.data.pars is list && request.resource.data.pars.size() == 9
+        && request.resource.data.pars[0] in [3, 4, 5] && request.resource.data.pars[1] in [3, 4, 5]
+        && request.resource.data.pars[2] in [3, 4, 5] && request.resource.data.pars[3] in [3, 4, 5]
+        && request.resource.data.pars[4] in [3, 4, 5] && request.resource.data.pars[5] in [3, 4, 5]
+        && request.resource.data.pars[6] in [3, 4, 5] && request.resource.data.pars[7] in [3, 4, 5]
+        && request.resource.data.pars[8] in [3, 4, 5]
+        && request.resource.data.createdAt == request.time;
+
+      match /members/{memberUid} {
+        allow read: if roundParticipant(roundId);
+        allow create: if roundHost(roundId)
+          && existsAfter(roundInvitePath(roundId, memberUid))
+          && request.resource.data.keys().hasOnly(['name']) && validName(request.resource.data.name);
+        allow delete: if isOwner(memberUid);
+      }
+      match /progress/{playerUid} {
+        allow read, delete: if isOwner(playerUid) && roundParticipant(roundId);
+        allow create, update: if isOwner(playerUid) && roundParticipant(roundId)
+          && request.resource.data.keys().hasOnly(['genVersion', 'holes', 'pendingAim'])
+          && request.resource.data.keys().hasAll(['genVersion', 'holes', 'pendingAim'])
+          && request.resource.data.genVersion is int
+          && request.resource.data.holes is list && request.resource.data.holes.size() == 9;
+      }
+      match /scores/{playerUid} {
+        allow read: if roundParticipant(roundId);
+        allow create: if isOwner(playerUid) && roundParticipant(roundId) && validRoundScore(request.resource.data);
+        allow delete: if isOwner(playerUid) && roundParticipant(roundId);
       }
     }
 

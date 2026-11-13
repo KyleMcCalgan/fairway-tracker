@@ -15,9 +15,15 @@ A personal handicap tracker that runs entirely in the browser. It is a static si
 - Statistics: trends, score distribution, per-course breakdown.
 - Shared course catalogue: search for a course before adding it, and use the rating and slope someone already entered. If a value is wrong for you, save your own; it applies only to your account.
 - JSON backup export and import.
-- **Play**: Handi Golf, a small golf minigame. Endless mode lets friends share a seed to play the same sequence of holes; Daily is the same three holes for everyone each day (UTC), one attempt, with a friends leaderboard and a global "better than X% of players" score. See `docs/game.md`.
+- **Play**: Handi Golf, a small golf minigame. Endless mode lets friends share a seed to play the same sequence of holes; Daily is the same three holes for everyone each day (UTC), one attempt, with a friends leaderboard and a global "better than X% of players" score. Invited rounds let any number of friends play the same nine holes in their own time, with a leaderboard and scorecards. See `docs/game.md`.
 
 The result is an **estimate**, not an official Handicap Index. See the in-app guide for what is left out.
+
+## Nine-hole rounds with friends
+
+In **Play → Rounds**, create a round, give it a name, and select the friends to invite. The host can invite more friends later. Everyone invited sees the round in the same tab and can play its nine holes at their own pace. Shots are saved to the player's account so they can leave and resume; a finished scorecard appears on the round leaderboard. Use **Refresh leaderboard** to see new results. Selecting a player's name opens their profile if you are friends, or offers a friend request if you are not.
+
+The scorecard is shared with everyone invited to that round; shot-by-shot progress is private. Like the Daily game, scores are based on an honour system. If the hole generator or shot rules change in a future game version, existing unfinished rounds cannot safely be resumed without preserving that older version.
 
 ## How the data is stored
 
@@ -34,6 +40,10 @@ The result is an **estimate**, not an official Handicap Index. See the in-app gu
 | `sharedStats/{uid}`                | Profile summary according to your sharing choices                 | You and accepted friends |
 | `dailyScores/{date_uid}`           | Daily game result                                                 | You and accepted friends |
 | `dailyStats/{date}`                | Daily score histogram                                             | Any signed-in user      |
+| `users/{uid}/gameRounds/{roundId}` | Invitations to nine-hole game rounds                              | Only you                |
+| `gameRounds/{roundId}`             | Nine-hole game round metadata and participants                    | Invited players         |
+| `gameRounds/{roundId}/progress/{uid}` | Saved shot progress                                            | Only the player         |
+| `gameRounds/{roundId}/scores/{uid}` | Finished game scorecard                                         | Invited players         |
 
 A course id is the name lower-cased with everything except letters and digits removed, so the same course can only exist once. Rules are in [`firestore.rules`](firestore.rules).
 

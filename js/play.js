@@ -3,8 +3,9 @@
 // data layer and docs/game.md for the game. Friends are managed on the Friends
 // page (js/friends.js); this view only shows a button that opens it.
 
-import { mount } from './game/index.js?v=20261114-2';
-import { startSocial, subscribeFriends } from './social.js?v=20261113-2';
+import { mount } from './game/index.js?v=20261114-3';
+import * as social from './social.js?v=20261114-3';
+import { createRoundsBackend } from './rounds-firebase.js?v=20261114-3';
 
 const $ = (id) => document.getElementById(id);
 
@@ -34,10 +35,10 @@ function makeFriendsButton(openFriends) {
 }
 
 /** Called when the Play view opens. `user` is the signed-in Firebase user. */
-export function showPlay(user, { openFriends } = {}) {
+export function showPlay(user, { openFriends, openFriendProfile } = {}) {
   if (game) return;
-  const backend = startSocial(user);
-  stopWatching = subscribeFriends((list) => {
+  const backend = social.startSocial(user);
+  stopWatching = social.subscribeFriends((list) => {
     incoming = list.filter((f) => f.status === 'incoming').length;
     renderBadge();
   });
@@ -47,6 +48,9 @@ export function showPlay(user, { openFriends } = {}) {
     headerExtras: [makeFriendsButton(openFriends)],
     storage: backend.storage,
     daily: backend.daily,
+    rounds: createRoundsBackend(user, backend),
+    social,
+    openFriendProfile,
   });
 }
 

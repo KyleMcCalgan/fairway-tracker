@@ -174,7 +174,7 @@
   font-size: 13px;
 }
 .hg-bar-main { font-weight: 600; min-width: 0; }
-.hg-bar-main { white-space: nowrap; }
+.hg-bar-main { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .hg-bar-btns { display: flex; gap: 4px; justify-content: flex-end; min-width: 0; }
 .hg-seedbtn { min-width: 0; max-width: 11.5em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
@@ -556,3 +556,27 @@
 .hg-table .hg-you { background: color-mix(in srgb, var(--hg-accent) 14%, transparent); }
 .hg-rank { font-weight: 800; width: 2.2em; }
 .hg-share { border-radius: 12px; background: color-mix(in srgb, var(--hg-line) 35%, var(--hg-card)); border-color: var(--hg-line); }
+
+/* Invited rounds */
+.hg-rounds { width: 100%; max-width: 780px; margin: 0 auto; }
+.hg-round-create, .hg-round-create > label { display: grid; gap: 8px; }
+.hg-round-create { gap: 12px; }
+.hg-round-friends { max-height: 280px; overflow-y: auto; border: 1px solid var(--hg-line); border-radius: 10px; }
+.hg-round-choice { display: flex; align-items: center; gap: 10px; padding: 10px 12px; }
+.hg-round-choice + .hg-round-choice { border-top: 1px solid var(--hg-line); }
+.hg-round-choice input { width: 18px; height: 18px; accent-color: var(--hg-accent); }
+.hg-round-row { display: flex; align-items: center; gap: 10px; width: 100%; min-width: 0; padding: 10px 0; border: 0; border-top: 1px solid var(--hg-line); background: transparent; color: var(--hg-fg); text-align: left; font: inherit; }
+button.hg-round-row { cursor: pointer; }
+button.hg-round-row > span:first-child { display: grid; gap: 2px; min-width: 0; flex: 1; }
+button.hg-round-row > span:last-child { font-size: 22px; color: var(--hg-muted); }
+.hg-round-name { min-width: 0; flex: 1; overflow-wrap: anywhere; padding: 0; border: 0; background: transparent; color: var(--hg-accent); font: inherit; font-weight: 700; text-align: left; cursor: pointer; }
+.hg-round-name:disabled { color: var(--hg-fg); cursor: default; }
+.hg-round-rank { width: 22px; color: var(--hg-muted); }
+.hg-round-total { font-size: 13px; white-space: nowrap; }
+.hg-round-ranking .hg-btn { min-height: 36px; padding: 4px 8px; font-size: 12px; }
+@media (max-width: 400px) {
+  .hg-header { gap: 5px; }
+  .hg-tab { padding-inline: 8px; }
+  .hg-header .hg-small { padding-inline: 8px; }
+  .hg-round-ranking { flex-wrap: wrap; }
+}

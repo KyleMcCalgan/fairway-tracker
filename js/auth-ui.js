@@ -5,7 +5,7 @@
 //   showApp()                 hides the sign-in screen and shows the app
 //   initAuth()                wires the form once, at start-up
 
-import * as fb from './firebase.js?v=20261113-2';
+import * as fb from './firebase.js?v=20261114-3';
 import { holeArt } from './auth-art.js';
 
 const $ = (id) => document.getElementById(id);

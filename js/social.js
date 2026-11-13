@@ -10,7 +10,7 @@
 //
 // No DOM in here. The views call these functions and render the results.
 
-import { createGameBackend } from './game-firebase.js?v=20261113-2';
+import { createGameBackend } from './game-firebase.js?v=20261114-3';
 import { buildShared, signature, normalizePrivacy } from './profile.js?v=20261113-2';
 
 const PUBLISH_DELAY_MS = 2000;

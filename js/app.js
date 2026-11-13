@@ -1,9 +1,9 @@
-import * as fb from './firebase.js?v=20261113-2';
-import { showPlay, hidePlay, resetPlay } from './play.js?v=20261114-2';
-import { initAuth, showAuth, showApp } from './auth-ui.js?v=20261113-2';
-import { startSocial, stopSocial, subscribeFriends, updateRounds, pausePublishing, resumePublishing } from './social.js?v=20261113-2';
-import { initFriends, setFriends, showFriends, resetFriends } from './friends.js?v=20261113-2';
-import { initSettings, renderSettings, resetSettings } from './settings.js?v=20261113-2';
+import * as fb from './firebase.js?v=20261114-3';
+import { showPlay, hidePlay, resetPlay } from './play.js?v=20261114-3';
+import { initAuth, showAuth, showApp } from './auth-ui.js?v=20261114-3';
+import { startSocial, stopSocial, subscribeFriends, updateRounds, pausePublishing, resumePublishing } from './social.js?v=20261114-3';
+import { initFriends, setFriends, showFriends, resetFriends, showFriendProfile } from './friends.js?v=20261114-3';
+import { initSettings, renderSettings, resetSettings } from './settings.js?v=20261114-3';
 import { renderExtraStats, initInsights } from './insights.js';
 
 let lastInfoTrigger = null;
@@ -1378,7 +1378,10 @@ function switchView(v) {
   };
   document.body.classList.toggle('on-play', v === 'play');
   $('pageActions').hidden = v === 'friends';
-  if (v === 'play' && session) showPlay(session.user, { openFriends: () => switchView('friends') });
+  if (v === 'play' && session) showPlay(session.user, {
+    openFriends: () => switchView('friends'),
+    openFriendProfile: (uid) => { switchView('friends'); showFriendProfile(uid); },
+  });
   else hidePlay();
   if (v === 'friends' && session) showFriends();
   if (v === 'settings') renderSettings();

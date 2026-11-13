@@ -9,7 +9,7 @@
 // draw through `renderFriends`. `initFriends` supplies the few things it needs
 // from the app: getMine() -> { handicap, mode } | null, and toast(text).
 
-import * as social from './social.js?v=20261113-2';
+import * as social from './social.js?v=20261114-3';
 import { avatarColors, initial, timeAgo, liveDailyStreak, signedOver, comparable } from './profile.js?v=20261113-2';
 
 const $ = (id) => document.getElementById(id);
@@ -83,6 +83,14 @@ async function loadSummaries({ force = false } = {}) {
 export function showFriends() {
   viewing = null;
   message = { text: '', error: false };
+  renderFriends();
+  loadSummaries({ force: true });
+}
+
+/** Opens an accepted friend's profile when navigating from a round. */
+export function showFriendProfile(uid) {
+  if (!friends.some((f) => f.uid === uid && f.status === 'friend')) return;
+  viewing = uid;
   renderFriends();
   loadSummaries({ force: true });
 }

@@ -158,6 +158,15 @@ export async function deleteAccount() {
   }
   const friendships = await getDocs(query(collection(db, 'friendships'), where('users', 'array-contains', uid)));
   friendships.docs.forEach((d) => refs.push(d.ref));
+  // Remove this player's round data before their invitation, which grants
+  // access to the private progress and shared score documents.
+  const roundInvites = await getDocs(collection(db, 'users', uid, 'gameRounds'));
+  for (const invitation of roundInvites.docs) {
+    refs.push(doc(db, 'gameRounds', invitation.id, 'progress', uid));
+    refs.push(doc(db, 'gameRounds', invitation.id, 'scores', uid));
+    refs.push(doc(db, 'gameRounds', invitation.id, 'members', uid));
+  }
+  roundInvites.docs.forEach((d) => refs.push(d.ref));
   if (code) refs.push(doc(db, 'friendCodes', code));
   refs.push(doc(db, 'playerDirectory', uid), doc(db, 'sharedStats', uid), doc(db, 'users', uid));
 

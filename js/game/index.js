@@ -24,6 +24,7 @@ import { METER } from './constants.js';
 import { h, openDialog } from './ui.js';
 import { createEndless } from './modes/endless.js?v=20261114-2';
 import { createDaily } from './modes/daily.js?v=20261114-1';
+import { createRounds } from './modes/rounds.js?v=20261114-3';
 
 function memoryStorage() {
   let lifetime = null, settings = null;
@@ -54,6 +55,7 @@ export function mount(container, options = {}) {
   };
   addTab('endless', 'Endless');
   if (daily) addTab('daily', 'Daily');
+  if (options.rounds) addTab('rounds', 'Rounds');
   const settingsBtn = h('button', { class: 'hg-btn hg-small', type: 'button', text: 'Settings' });
   const header = h('header', { class: 'hg-header' }, h('h1', { text: 'Handi Golf' }), nav, ...(options.headerExtras || []), settingsBtn);
   const body = h('div', { class: 'hg-body' });
@@ -63,13 +65,13 @@ export function mount(container, options = {}) {
 
   function setMode(next) {
     if (unmounted) return;
-    if (next !== 'daily' || !daily) next = 'endless';
+    if (!((next === 'daily' && daily) || (next === 'rounds' && options.rounds))) next = 'endless';
     if (next === mode) return;
     if (current) current.destroy();
     mode = next;
     for (const id of Object.keys(tabs)) tabs[id].setAttribute('aria-pressed', String(id === mode));
-    const env = { storage, daily, settings, root, seed: options.seed };
-    current = mode === 'daily' ? createDaily(body, env) : createEndless(body, env);
+    const env = { storage, daily, settings, root, seed: options.seed, rounds: options.rounds, social: options.social, openFriendProfile: options.openFriendProfile };
+    current = mode === 'daily' ? createDaily(body, env) : mode === 'rounds' ? createRounds(body, env) : createEndless(body, env);
   }
 
   function saveSettings() {

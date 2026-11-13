@@ -13,7 +13,7 @@
 // The Daily draft (the round in progress) stays in this browser's localStorage:
 // it changes after every shot, and Daily is an honour-system game anyway.
 
-import { getDb } from './firebase.js?v=20261113-2';
+import { getDb } from './firebase.js?v=20261114-3';
 import { normalizePrivacy, nameSearchKey } from './profile.js?v=20261113-2';
 import {
   doc,
@@ -345,7 +345,7 @@ export function createGameBackend(user) {
     onSnapshot(gameDoc('lifetime'), (s) => callback(s.exists() ? s.data() : null), onError);
 
   return {
-    uid, storage, daily, profile, setName, watchFriends, addByCode, searchPlayers, addByUser, publishDirectory, accept, remove,
+    uid, storage, daily, profile, setName, watchFriends, addByCode, addPlayer, searchPlayers, addByUser, publishDirectory, accept, remove,
     loadPrivacy, savePrivacy, publishShared, fetchShared, watchLifetime,
   };
 }
