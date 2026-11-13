@@ -13,8 +13,8 @@
 // The Daily draft (the round in progress) stays in this browser's localStorage:
 // it changes after every shot, and Daily is an honour-system game anyway.
 
-import { getDb } from './firebase.js';
-import { normalizePrivacy, nameSearchKey } from './profile.js';
+import { getDb } from './firebase.js?v=20261113-2';
+import { normalizePrivacy, nameSearchKey } from './profile.js?v=20261113-2';
 import {
   doc,
   getDoc,

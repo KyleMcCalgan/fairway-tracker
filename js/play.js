@@ -4,7 +4,7 @@
 // page (js/friends.js); this view only shows a button that opens it.
 
 import { mount } from './game/index.js';
-import { startSocial, subscribeFriends } from './social.js';
+import { startSocial, subscribeFriends } from './social.js?v=20261113-2';
 
 const $ = (id) => document.getElementById(id);
 

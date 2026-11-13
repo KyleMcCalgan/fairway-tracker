@@ -1,9 +1,9 @@
-import * as fb from './firebase.js';
-import { showPlay, hidePlay, resetPlay } from './play.js';
-import { initAuth, showAuth, showApp } from './auth-ui.js';
-import { startSocial, stopSocial, subscribeFriends, updateRounds, pausePublishing, resumePublishing } from './social.js';
-import { initFriends, setFriends, showFriends, resetFriends } from './friends.js';
-import { initSettings, renderSettings, resetSettings } from './settings.js';
+import * as fb from './firebase.js?v=20261113-2';
+import { showPlay, hidePlay, resetPlay } from './play.js?v=20261113-2';
+import { initAuth, showAuth, showApp } from './auth-ui.js?v=20261113-2';
+import { startSocial, stopSocial, subscribeFriends, updateRounds, pausePublishing, resumePublishing } from './social.js?v=20261113-2';
+import { initFriends, setFriends, showFriends, resetFriends } from './friends.js?v=20261113-2';
+import { initSettings, renderSettings, resetSettings } from './settings.js?v=20261113-2';
 import { renderExtraStats, initInsights } from './insights.js';
 
 let lastInfoTrigger = null;

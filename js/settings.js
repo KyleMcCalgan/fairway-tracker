@@ -9,9 +9,9 @@
 //   afterDeleteFailed()   undo that if deleting did not go through
 //   toast(text)
 
-import * as fb from './firebase.js';
-import { subscribeProfile, getProfile, getPrivacy, isPrivacyReady, savePrivacy, renameSelf } from './social.js';
-import { PRIVACY_KEYS, PRIVACY_LABELS } from './profile.js';
+import * as fb from './firebase.js?v=20261113-2';
+import { subscribeProfile, getProfile, getPrivacy, isPrivacyReady, savePrivacy, renameSelf } from './social.js?v=20261113-2';
+import { PRIVACY_KEYS, PRIVACY_LABELS } from './profile.js?v=20261113-2';
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) =>

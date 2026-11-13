@@ -9,8 +9,8 @@
 // draw through `renderFriends`. `initFriends` supplies the few things it needs
 // from the app: getMine() -> { handicap, mode } | null, and toast(text).
 
-import * as social from './social.js';
-import { avatarColors, initial, timeAgo, liveDailyStreak, signedOver, comparable } from './profile.js';
+import * as social from './social.js?v=20261113-2';
+import { avatarColors, initial, timeAgo, liveDailyStreak, signedOver, comparable } from './profile.js?v=20261113-2';
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) =>
