@@ -1987,8 +1987,11 @@ body.on-play .main > .top {
   border: 1px solid var(--border);
   border-radius: 16px;
   overflow: hidden;
-  background: #d8e9d1;
+  background: var(--bg);
   box-shadow: var(--shadow);
+}
+.game-host .hg-root {
+  font: inherit;
 }
 @media (max-width: 700px) {
   .game-host {

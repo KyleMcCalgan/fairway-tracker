@@ -2,15 +2,15 @@
    this file can be loaded by any host page without touching its styles. */
 
 .hg-root {
-  --hg-bg: #d8e9d1;
-  --hg-fg: #15241b;
-  --hg-muted: #4a6252;
-  --hg-card: #f6fbf3;
-  --hg-line: #b3cdaa;
-  --hg-accent: #1b6e37;
+  --hg-bg: #f5f7f4;
+  --hg-fg: #16261f;
+  --hg-muted: #718178;
+  --hg-card: #ffffff;
+  --hg-line: #e4ebe5;
+  --hg-accent: #215a42;
   --hg-accent-fg: #ffffff;
-  --hg-focus: #0b57d0;
-  --hg-warn: #b3261e;
+  --hg-focus: #2b7955;
+  --hg-warn: #bf604d;
   color-scheme: light;
   box-sizing: border-box;
   display: flex;
@@ -41,16 +41,15 @@
 }
 
 .hg-root.hg-light {
-  --hg-accent: #215a42; /* the app's green */
-  --hg-bg: #d8e9d1;
-  --hg-fg: #15241b;
-  --hg-muted: #4a6252;
-  --hg-card: #f6fbf3;
-  --hg-line: #b3cdaa;
-  --hg-accent: #1b6e37;
+  --hg-bg: #f5f7f4;
+  --hg-fg: #16261f;
+  --hg-muted: #718178;
+  --hg-card: #ffffff;
+  --hg-line: #e4ebe5;
+  --hg-accent: #215a42;
   --hg-accent-fg: #ffffff;
-  --hg-focus: #0b57d0;
-  --hg-warn: #b3261e;
+  --hg-focus: #2b7955;
+  --hg-warn: #bf604d;
   color-scheme: light;
 }
 
@@ -119,6 +118,7 @@
   gap: 8px;
   padding: 8px 10px;
   border-bottom: 1px solid var(--hg-line);
+  background: var(--hg-card);
 }
 .hg-header h1 { font-size: 16px; font-weight: 800; margin-right: auto; white-space: nowrap; }
 /* Mode switch: one segmented control, the active segment lifts. */
@@ -127,7 +127,7 @@
   gap: 2px;
   padding: 3px;
   border-radius: 12px;
-  background: color-mix(in srgb, var(--hg-line) 55%, transparent);
+  background: var(--hg-bg);
 }
 .hg-tab {
   min-height: 32px;
@@ -141,7 +141,7 @@
 .hg-tab[aria-pressed='true'] {
   background: var(--hg-card);
   color: var(--hg-fg);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+  box-shadow: 0 1px 3px rgba(21, 55, 39, 0.1);
 }
 .hg-header .hg-small { position: relative; }
 .hg-badge {
@@ -414,7 +414,7 @@
 .hg-card-head {
   padding: 18px 20px 16px;
   color: #fff;
-  background: linear-gradient(160deg, var(--hg-tone, var(--hg-t-par)), color-mix(in srgb, var(--hg-tone, var(--hg-t-par)) 70%, #000));
+  background: var(--hg-tone, var(--hg-t-par));
 }
 .hg-card-head h2 { font-size: 30px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.1; }
 .hg-card-head p { margin-top: 4px; font-size: 13.5px; opacity: 0.92; }
@@ -511,14 +511,15 @@
 .hg-daily h2 { font-size: 22px; font-weight: 800; letter-spacing: -0.01em; }
 .hg-panel {
   padding: 16px;
-  border: 0;
-  border-radius: 18px;
+  border: 1px solid var(--hg-line);
+  border-radius: 17px;
   gap: 10px;
-  box-shadow: 0 2px 10px -4px rgba(21, 60, 36, 0.28);
+  box-shadow: 0 10px 35px rgba(21, 55, 39, 0.045);
 }
 .hg-panel h3 { font-size: 16px; font-weight: 800; }
 .hg-hero {
-  background: linear-gradient(160deg, var(--hg-accent), color-mix(in srgb, var(--hg-accent) 72%, #000));
+  background: var(--hg-accent);
+  border-color: var(--hg-accent);
   color: var(--hg-accent-fg);
 }
 .hg-hero .hg-note { color: inherit; opacity: 0.85; }
