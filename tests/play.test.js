@@ -6,7 +6,19 @@ import { resolveShot, surfaceAt, maxCarry } from '../js/game/physics.js';
 import { newHoleState, applyShot, replay, puttsFor, aimCentre, headingTenths, isValidInput, suggestClub, scoreName } from '../js/game/rules.js';
 import { triangle, aimOffsetDeg, powerFrac, lockAim, lockPower, quantisePower, aimSweepMs, powerSweepMs } from '../js/game/meter.js';
 import { makeRng } from '../js/game/rng.js';
-import { addToLifetime, emptyLifetime } from '../js/game/modes/endless.js';
+import { addToLifetime, emptyLifetime, endlessHoleSeed } from '../js/game/modes/endless.js';
+
+test('an Endless run seed reproduces the same sequence independently of scores or replays', () => {
+  const seeds = (seed) => Array.from({ length: 5 }, (_, i) => endlessHoleSeed(seed, i));
+  const first = seeds('friends-2026');
+  assert.equal(first[0], 'friends-2026'); // Existing single-hole seeds keep their original first hole.
+  assert.deepEqual(first, seeds('friends-2026'));
+  assert.equal(new Set(first).size, first.length);
+  assert.notDeepEqual(first, seeds('friends-2027'));
+  assert.deepEqual(generateHole(first[1]), generateHole(endlessHoleSeed('friends-2026', 1)));
+  assert.notEqual(endlessHoleSeed('friends-2026', 1), endlessHoleSeed('friends-2026', 2));
+  assert.throws(() => endlessHoleSeed('friends-2026', -1), RangeError);
+});
 
 // Play a hole with seeded-random (but always valid, quantised) inputs.
 function randomRound(hole, rng) {

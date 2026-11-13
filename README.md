@@ -15,7 +15,7 @@ A personal handicap tracker that runs entirely in the browser. It is a static si
 - Statistics: trends, score distribution, per-course breakdown.
 - Shared course catalogue: search for a course before adding it, and use the rating and slope someone already entered. If a value is wrong for you, save your own; it applies only to your account.
 - JSON backup export and import.
-- **Play**: Handi Golf, a small golf minigame. Endless mode is a new random hole every time; Daily is the same three holes for everyone each day (UTC), one attempt, with a friends leaderboard (add friends by code) and a global "better than X% of players" score. See `docs/game.md`.
+- **Play**: Handi Golf, a small golf minigame. Endless mode lets friends share a seed to play the same sequence of holes; Daily is the same three holes for everyone each day (UTC), one attempt, with a friends leaderboard and a global "better than X% of players" score. See `docs/game.md`.
 
 The result is an **estimate**, not an official Handicap Index. See the in-app guide for what is left out.
 

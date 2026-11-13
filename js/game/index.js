@@ -22,7 +22,7 @@
 
 import { METER } from './constants.js';
 import { h, openDialog } from './ui.js';
-import { createEndless } from './modes/endless.js';
+import { createEndless } from './modes/endless.js?v=20261114-2';
 import { createDaily } from './modes/daily.js?v=20261114-1';
 
 function memoryStorage() {

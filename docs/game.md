@@ -39,7 +39,7 @@ A 2D, top-down canvas golf game with procedurally generated holes. Units are yar
 - Wind that the player must allow for.
 - A shot is two timed taps: an aim arrow sweeps left and right (tap to lock the direction), then a power bar sweeps up and down (tap to lock the power). There is no redo.
 - When the ball stops on the green the hole ends: two rings around the cup decide whether it costs 1, 2 or 3 putts.
-- Two modes: **Endless** (a new random hole every time) and **Daily** (the same three holes for everyone each UTC day, one attempt).
+- Two modes: **Endless** (a shareable, seeded sequence of holes) and **Daily** (the same three holes for everyone each UTC day, one attempt).
 
 There is no randomness in play. A shot is a pure function of the hole, where the ball lies, and three integers. Randomness exists only in seeded hole generation.
 
@@ -680,11 +680,10 @@ Yardage markers are small dots on the centerline 100, 150 and 200 yards from the
 
 `modes/endless.js`.
 
-- **Seeds.** Each hole uses 8 base-36 characters from `crypto.getRandomValues`. The seed is shown on a button above the map and on the result card.
-- **Variety.** If the new hole has the same par or the same archetype as the previous one, the seed is re-rolled, up to 3 times. Because the hole is still a function of its seed alone, typing the seed back in always reproduces it.
-- **Seed dialog.** Copy the current seed, or type any seed to play it next.
+- **Seeds.** A run starts with a random seed, shown above the map. The first hole uses that seed directly; later hole seeds derive from the run seed and position. The same run seed produces the same sequence for every player.
+- **Seed dialog.** Copy the run seed to share it, enter a seed to start that sequence from the first hole, or start a new random run. Starting a run resets the session scorecard.
 - **Result card.** Score name, strokes with the breakdown into shots, putts and penalties, the session total, the seed, and "Next hole" or "Replay this hole".
-- **Scorecard.** A table of every hole finished this session with par, score, result and seed, plus totals. The session lives in memory and is lost on reload.
+- **Scorecard.** A table of every hole finished this session with par, score, result and hole seed, plus totals. Replaying a hole replaces its score in the session; lifetime stats still count each completed attempt. The session lives in memory and is lost on reload.
 - **Lifetime stats**, saved through the storage adapter after every hole: holes played, average versus par, current and best streak of par-or-better, birdies, eagles or better, holes-in-one, OB count, water count and pick-ups.
 - **Assist.** A setting that makes both meters 1.5 times slower. Endless only.
 
@@ -937,7 +936,7 @@ Where the build differs from the original plan, and why:
 | Polygons of 32-64 vertices | Greens and bunkers stay in range. Fairway and OB polygons use up to about 115, and a long river up to about 170 | Long curved edges looked faceted |
 | Bunkers before water | Water first, then bunkers avoid it | Water is the more constrained |
 | Short-sided on about a quarter of holes with greenside hazards | About 9% of all holes | Only hazards within 3 yards of the green can qualify |
-| Avoid repeating the previous par or archetype | Re-roll the seed up to 3 times, then accept | Keeps the seed alone sufficient to reproduce the hole |
+| Endless hole sequence | Derive each hole seed from the run seed and its position | Friends can play the same sequence independently |
 | Draft saved after every locked shot | Also saved when the aim locks | Closes the refresh-to-re-aim loophole |
 | `storage` has four methods | Plus optional `loadSettings` and `saveSettings` | Assist and latency need to persist |
 
