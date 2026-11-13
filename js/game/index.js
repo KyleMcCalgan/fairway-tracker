@@ -58,6 +58,7 @@ export function mount(container, options = {}) {
   const header = h('header', { class: 'hg-header' }, h('h1', { text: 'HANDI Golf' }), nav, settingsBtn);
   const body = h('div', { class: 'hg-body' });
   const root = h('div', { class: 'hg-root' }, header, body);
+  if (options.theme === 'light') root.classList.add('hg-light');
   container.append(root);
 
   function setMode(next) {

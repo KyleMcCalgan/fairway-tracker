@@ -66,6 +66,27 @@ export function rankLeaderboard(rows) {
   return out.concat(idle.map((r) => ({ ...r, rank: null }))).slice(0, LEADERBOARD_CAP);
 }
 
+// Where a total sits among everyone who played the day. `counts` maps a total to
+// how many players finished on it. Lower is better; ties share the difference.
+// `beat` is the share of the OTHER players you finished ahead of (0..1), or null
+// when nobody else has played. You are counted even if your own result has not
+// reached the histogram yet.
+export function percentile(counts, total) {
+  let n = 0, ahead = 0, tied = 0, behind = 0;
+  for (const key of Object.keys(counts || {})) {
+    const t = Number(key), c = Math.floor(Number(counts[key]));
+    if (!Number.isFinite(t) || !(c > 0)) continue;
+    n += c;
+    if (t < total) ahead += c;
+    else if (t === total) tied += c;
+    else behind += c;
+  }
+  if (tied < 1) { tied = 1; n += 1; }
+  const others = n - 1;
+  if (others <= 0) return { n, beat: null, ahead, tied, behind };
+  return { n, beat: (behind + (tied - 1) / 2) / others, ahead, tied, behind };
+}
+
 function dayBefore(date) {
   return new Date(Date.parse(date + 'T00:00:00Z') - 86400000).toISOString().slice(0, 10);
 }
@@ -150,6 +171,11 @@ export function createDaily(root, env) {
     const box = h('div', { class: 'hg-panel' }, h('h3', { text: 'Friends today' }), h('p', { class: 'hg-note', text: 'Loading…' }));
     try {
       const rows = rankLeaderboard(await daily.fetchLeaderboard(date));
+      if (rows.length <= 1 && daily.emptyFriendsNote) {
+        box.lastChild.replaceWith(h('p', { class: 'hg-note', text: daily.emptyFriendsNote }));
+        if (rows[0] && rows[0].total != null) box.append(h('p', null, 'You: ', h('strong', { text: String(rows[0].total) + ' strokes' })));
+        return box;
+      }
       const body = rows.map((r) => h('tr', { class: (r.isYou ? 'hg-you ' : '') + (r.total == null ? 'hg-idle' : '') },
         h('td', { text: r.rank == null ? '–' : String(r.rank) }),
         h('th', { scope: 'row', text: r.name + (r.isYou && r.name !== 'You' ? ' (you)' : '') }),
@@ -161,6 +187,36 @@ export function createDaily(root, env) {
     } catch (e) {
       console.warn('leaderboard failed', e);
       box.lastChild.replaceWith(h('p', { class: 'hg-note', text: 'Could not load the leaderboard.' }));
+    }
+    return box;
+  }
+
+  // "How did I do against everyone?": a percentile line and a small histogram of
+  // every total played today, with yours highlighted. Needs daily.fetchGlobal.
+  async function globalPanel(total) {
+    if (!daily.fetchGlobal) return null;
+    const box = h('div', { class: 'hg-panel' }, h('h3', { text: 'Everyone today' }), h('p', { class: 'hg-note', text: 'Loading…' }));
+    try {
+      const g = await daily.fetchGlobal(date);
+      const pct = percentile(g.counts, total);
+      const line = pct.beat == null
+        ? 'You are the first to finish today’s round. Check back later to see where you land.'
+        : pct.beat >= 0.5
+          ? 'Better than ' + Math.round(pct.beat * 100) + '% of the other ' + (pct.n - 1) + ' players today.'
+          : 'Top ' + Math.max(1, Math.round((1 - pct.beat) * 100)) + '% of ' + pct.n + ' players today.';
+      const counts = { ...g.counts };
+      if (!(counts[total] > 0)) counts[total] = 1; // your own result may not have reached the histogram yet
+      const totals = Object.keys(counts).map(Number).filter((t) => counts[t] > 0).sort((a, b) => a - b);
+      const max = Math.max(...totals.map((t) => counts[t]));
+      const bars = totals.map((t) => h('div', { class: 'hg-hist-col' + (t === total ? ' hg-hist-you' : ''), title: counts[t] + (counts[t] === 1 ? ' player' : ' players') + ' on ' + t },
+        h('div', { class: 'hg-hist-bar', style: 'height:' + Math.max(4, Math.round((counts[t] / max) * 64)) + 'px' }),
+        h('span', { class: 'hg-note', text: String(t) })));
+      const hist = h('div', { class: 'hg-hist', role: 'img', 'aria-label': 'Distribution of today’s totals; you finished on ' + total }, bars);
+      box.lastChild.replaceWith(h('p', { class: 'hg-pct', text: line }));
+      box.append(hist, h('p', { class: 'hg-note', text: 'Strokes for the round. Fewer is better; yours is highlighted.' }));
+    } catch (e) {
+      console.warn('global stats failed', e);
+      box.lastChild.replaceWith(h('p', { class: 'hg-note', text: 'Could not load everyone’s scores.' }));
     }
     return box;
   }
@@ -286,7 +342,10 @@ export function createDaily(root, env) {
         h('pre', { class: 'hg-share hg-select', tabindex: '0', 'aria-label': 'Result text to share', text }),
         copy, status));
     el.append(view);
-    view.append(await leaderboard());
+    const glob = await globalPanel(result.total);
+    if (alive && glob) view.append(glob);
+    const board = await leaderboard();
+    if (alive) view.append(board);
   }
 
   async function start() {
@@ -305,6 +364,19 @@ export function createDaily(root, env) {
       return;
     }
     if (!alive) return;
+    // A result already stored for today (for example from another device) wins over any local draft.
+    if (!(draft.done && draft.result) && daily.fetchMine) {
+      try {
+        const mine = await daily.fetchMine(date);
+        if (mine && mine.holes && mine.holes.length === 3) {
+          draft = emptyDraft(date);
+          draft.done = true;
+          draft.result = mine;
+          states = mine.holes.map(() => newHoleState());
+        }
+      } catch (e) { console.warn('could not check for a stored result', e); }
+      if (!alive) return;
+    }
     if (draft.done && draft.result) showResult();
     else if (holeIndex() === 3) finish(); // all three holes logged but the result was never stored
     else showLobby();

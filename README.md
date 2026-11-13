@@ -14,6 +14,7 @@ A personal handicap tracker that runs entirely in the browser. It is a static si
 - Statistics: trends, score distribution, per-course breakdown.
 - Shared course catalogue: search for a course before adding it, and use the rating and slope someone already entered. If a value is wrong for you, save your own; it applies only to your account.
 - JSON backup export and import.
+- **Play**: HANDI Golf, a small golf minigame. Endless mode is a new random hole every time; Daily is the same three holes for everyone each day (UTC), one attempt, with a friends leaderboard (add friends by code) and a global "better than X% of players" score. See `docs/game.md`.
 
 The result is an **estimate**, not an official Handicap Index. See the in-app guide for what is left out.
 
@@ -86,7 +87,13 @@ Importing adds courses to the shared catalogue when they are new, reuses ones th
 ├── js/
 │   ├── app.js            Handicap logic, rendering and UI behaviour
 │   ├── firebase.js       Sign-in and every Firestore read/write
-│   └── firebase-config.js  Your Firebase project settings (the one file to edit)
-├── firestore.rules       Firestore security rules
+│   ├── firebase-config.js  Your Firebase project settings (the one file to edit)
+│   ├── play.js           The Play view and Friends dialog
+│   ├── game-firebase.js  Firestore adapters and friends logic for the game
+│   └── game/             HANDI Golf itself (no Firebase, no app imports)
+├── game/                 Standalone game page, game styles, local adapters
+├── tools/  tests/        Hole gallery, balance bot; `node --test`
+├── docs/game.md          How the game works
+├── firestore.rules       Firestore security rules (publish after every change)
 └── README.md
 ```

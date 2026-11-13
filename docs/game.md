@@ -2,7 +2,7 @@
 
 This document describes the HANDI Golf minigame as it is built: how a hole is generated from a seed, how a shot is resolved, how the play screen drives both, and how the two modes sit on top. It replaces the original planning document, which is kept in git history (commit `774f340`).
 
-**Status.** Milestones 1 to 4 are built on branch `game-standalone`: generator and gallery, shot mechanics and Endless mode, balance tool and tuning, and Daily mode against a local stub. Milestone 5 (integration into the HANDI app with Firebase) is not started. The game runs standalone, fully offline, with no login and no network calls.
+**Status.** Milestones 1 to 4 are built on branch `game-standalone`: generator and gallery, shot mechanics and Endless mode, balance tool and tuning, and Daily mode against a local stub. Milestone 5 (integration into the HANDI app) is built too: a "Play" view in the app, Firebase-backed adapters, a friends system, a friends leaderboard and a global percentile (section 13.1). The standalone page (`game/index.html`) still runs fully offline, with no login and no network calls.
 
 Every number quoted here comes from `js/game/constants.js`. If this document and that file disagree, the file is right.
 
@@ -303,9 +303,9 @@ A rounded rectangle 7 yards wide and 9 long, centred on the origin and rotated t
 
 ### 6.6 Water
 
-34% of holes roll for water, and a quarter of those roll for a second feature of a different kind (stream 30%, river 35%, pond 35% by weight), so the cap is 2. In practice about 31% of holes end up with water, because a feature that cannot be placed is dropped (below).
+65% of holes roll for water, and a quarter of those roll for a second feature of a different kind (stream 30%, river 35%, pond 35% by weight), so the cap is 2. In practice about 50% of holes end up with water, because a feature that cannot be placed is dropped (below).
 
-**Crossing stream.** A band 3-9 yards wide that crosses the whole corridor.
+**Crossing stream.** A band 10-22 yards wide that crosses the whole corridor.
 
 - Position: on par 3s, and half the time otherwise, 30-60 yards short of the green's front edge; otherwise at the driver landing zone (about 211-231 yards), which forces a carry-or-lay-up decision.
 - Shape: built in map space along the line square to the centerline at that point, with a meander of 3-8 yards, a slight slant, and varying width. It extends 14 yards beyond the OB line on both sides so it cannot be walked around; the part outside is hidden under the OB fill.
@@ -313,11 +313,11 @@ A rounded rectangle 7 yards wide and 9 long, centred on the origin and rotated t
 
 **Side river.** Runs alongside one side for 80-250 yards.
 
-- Its inner bank is 3-15 yards outside the fairway edge with a gentle meander; it is 8-20 yards wide and tapers to a point over 25 yards at each end.
+- Its inner bank is 3-15 yards outside the fairway edge with a gentle meander; it is 12-36 yards wide and tapers to a point over 25 yards at each end.
 - It starts at least 25 yards from the tee and ends at least 12 yards before the green's edge.
-- It must leave 9 yards of rough between its outer bank and the OB line. If the rough band cannot fit a river at least 8 yards wide, there is no river.
+- It must leave 9 yards of rough between its outer bank and the OB line. If the rough band cannot fit a river at least 12 yards wide, there is no river.
 
-**Greenside pond.** An irregular blob of radius 8-20 yards.
+**Greenside pond.** An irregular blob of radius 18-38 yards.
 
 - Placed 4-12 yards off the green's edge, somewhere within 100 degrees either side of the direction back toward the tee: in front or beside the green, never behind it.
 
@@ -340,19 +340,19 @@ All bunkers are polygons rounded with two passes of Chaikin corner cutting. Six 
 
 | Type | Where | Shape | Size |
 |---|---|---|---|
-| Crescent | wraps part of the green, 1-5 yards off its edge | an arc that follows the green's own outline, thickest in the middle, blunt at the ends | 14-30 long, 4-8 deep |
-| Pot | tight to the green, 1-3 yards off | small circle with 2-3 lobes | radius 2.5-4 |
-| Guard | at a landing zone, straddling a fairway edge | strip along the edge, thickest in the middle | 12-28 long, 5-9 deep |
-| Cross | par 5 only, across the fairway, 265-340 yards from the tee | strip across the hole, anchored to one edge 60% of the time | spans 40-50% of the fairway width, 5-8 thick |
-| Scatter | in the rough | lobed blob | radius 3-7 |
-| Cluster | greenside or at a fairway edge | 2-3 overlapping small blobs sharing a `group` id | each radius 2.5-4.5 |
+| Crescent | wraps part of the green, 1-5 yards off its edge | an arc that follows the green's own outline, thickest in the middle, blunt at the ends | 34-64 long, 11-18 deep |
+| Pot | tight to the green, 1-3 yards off | small circle with 2-3 lobes | radius 6-9.5 |
+| Guard | at a landing zone, straddling a fairway edge | strip along the edge, thickest in the middle | 30-60 long, 12-20 deep |
+| Cross | par 5 only, across the fairway, 265-340 yards from the tee | strip across the hole, anchored to one edge 60% of the time | spans 40-50% of the fairway width, 12-19 thick |
+| Scatter | in the rough | lobed blob | radius 8-16 |
+| Cluster | greenside or at a fairway edge | 2-3 overlapping small blobs sharing a `group` id | each radius 6-10 |
 
 **How many.** With `d` the difficulty and `r` a fresh random number each time:
 
-- Greenside: `floor(r * (1.6 + 2.4d) + 0.3)`, at most 3. Each goes in a different slot around the green (front-left, front-right, left, right, front, back). The back slot always gets a pot; otherwise 25% pot, 20% cluster, 55% crescent.
+- Greenside: `floor(r * (1.6 + 2.4d) + 0.3)`, at most 3, and at least 2 on a par 3. A par 3's bunkers are all greenside. Each goes in a different slot around the green (front-left, front-right, left, right, front, back). The back slot always gets a pot; otherwise 25% pot, 20% cluster, 55% crescent.
 - Fairway (par 4 and 5): `floor(r * (1.2 + 1.6d) + 0.2)`, at most 2 (3 on a par 5). Each goes to a random landing zone and side; 20% are clusters, the rest guards.
 - Cross (par 5): chance `0.12 * (0.5 + d)`.
-- Scatter: `floor(r * (1 + 1.5d))`.
+- Scatter: `floor(r * (1 + 1.5d))`, par 4 and 5 only.
 
 **Landing zones** are 85-90% of a club's maximum carry from the tee: the driver zone always, the iron zone 25% of the time, and on par 5s a second-shot zone 150-215 yards beyond the first.
 
@@ -454,7 +454,7 @@ The lie changes both distance and how fast the aim arrow moves.
 | Rough | 0.7 / 0.8 / 0.8 | 1.3 / 1.3 / 1.3 |
 | Bunker | 0.35 / 0.5 / 0.75 | 1.6 / 1.6 / 1.2 |
 
-`maxCarry(club, lie)` is the product of the club's max carry and the lie multiplier. The HUD shows it on each club button and the range ring on the map is drawn at that radius, so there are no hidden penalties.
+`maxCarry(club, lie)` is the product of the club's max carry and the lie multiplier. The HUD shows it on each club button and the range ring on the map is drawn at that radius, so there are no hidden penalties. The aim arrow itself is only a short pointer (30% of that radius, `AIM_ARROW_FRAC` in `render.js`), so it shows direction, not distance.
 
 ### 8.2 The two meters
 
@@ -509,7 +509,7 @@ carry = carry0 * (1 + along * k * 0.12)
 drift = carry0 * cross * k * 0.12
 ```
 
-So a 20 mph tailwind adds 12% to a driver's carry, a headwind removes 12%, and a 20 mph crosswind moves a driver sideways by 12% of its carry: 30 yards on a full drive. Iron and wedge move 80% and 60% as much, relative to their carry. The aim arrow and power preview do not show the effect of wind; allowing for it is the player's job.
+So a 20 mph tailwind adds 12% to a driver's carry, a headwind removes 12%, and a 20 mph crosswind moves a driver sideways by 12% of its carry: 30 yards on a full drive. Iron and wedge move 80% and 60% as much, relative to their carry. The aim arrow and power bar do not show the effect of wind; allowing for it is the player's job.
 
 **4. Landing point.**
 
@@ -593,7 +593,7 @@ Other helpers: `suggestClub` picks the shortest club that reaches the pin, or th
 
 ### 10.1 Layout
 
-Top to bottom: a six-chip HUD (hole, par, strokes, distance to the pin, wind arrow and speed, lie), the canvas, three club buttons showing each club's carry for the current lie, one large action button, and a one-line hint. A "Whole hole" button over the canvas toggles between the aiming view and the full hole.
+Top to bottom: a six-chip HUD (hole, par, strokes, distance to the pin, wind arrow and speed, lie), the canvas, three club buttons showing each club's carry for the current lie, one large action button, and a one-line hint. A "Whole hole" button over the canvas toggles between the aiming view and the full hole. Beside it, "−" and "+" buttons zoom the aiming view out and back in (three steps of 1.5x), and work during the aim and power meters too. The zoom is display only, persists from shot to shot and resets on a new hole.
 
 ### 10.2 Phases
 
@@ -605,9 +605,9 @@ intro ──► ready ──► aim ──► power ──► anim ──► rea
 | Phase | What happens |
 |---|---|
 | `intro` | the whole hole is shown for 1.3 seconds, then the camera drops to the ball |
-| `ready` | pick a club; the range ring and the faint sweep limits are drawn. The action button reads "Swing" |
+| `ready` | pick a club; the max-range ring and the faint sweep limits are drawn. The action button reads "Swing" |
 | `aim` | the arrow sweeps. The button reads "Lock aim" |
-| `power` | the arrow is fixed; the bar sweeps, with the resulting carry in yards (without wind) shown above it and a dot moving along the aim line. The button reads "Lock power" |
+| `power` | the arrow is fixed; the bar sweeps and nothing else is drawn: there is no yardage readout and no landing dot, so the player judges distance from the bar against the max-range ring and the club's carry on its button. The button reads "Lock power" |
 | `anim` | the shot is resolved at once, then animated |
 | `done` | the hole is over; the mode shows a result card |
 
@@ -809,6 +809,29 @@ Without a `storage` adapter the game keeps everything in memory. Without a `dail
 - `storage` writes JSON to `localStorage` under keys starting `handi.game.`: `lifetime`, `settings`, `daily.draft.<date>.local` and `daily.score.<date>_local`. If `localStorage` is blocked it falls back to memory.
 - `daily` is a stub backend. `getToday()` reads the clock (or the `?date=` override). `submit` is create-only: a second submit for the same date returns the first result unchanged. `fetchLeaderboard` returns your row plus five invented friends, each labelled "(demo)". A fake friend's score is seeded by the date and their name, so it is stable all day, and it only appears once that friend's invented tee time has passed; about one in five does not play at all.
 
+### 13.1 In the HANDI app
+
+The app's "Play" view (`js/play.js`) mounts the game with `theme: 'light'` and the Firestore adapters from `js/game-firebase.js`. The game is mounted when the view opens and unmounted when the user leaves it, so an Endless session scorecard is lost on navigation; a Daily round in progress is not, because its draft is saved after every locked tap.
+
+The adapters add three optional members to `daily`, which the game uses when present: `fetchMine(date)` (a result already stored for today, from this or another device, wins over a local draft), `fetchGlobal(date)` (the histogram below) and `emptyFriendsNote` (shown when you have no friends).
+
+| Data | Where | Notes |
+|---|---|---|
+| Lifetime stats, settings, profile | `users/{uid}/game/{lifetime, settings, profile}` | private to the player |
+| Daily draft | localStorage on this device | changes every shot; honour system anyway |
+| Friend code | `friendCodes/{code}` = `{ uid, name }` | 8 characters; looked up by exact code only, never listed |
+| Friend request / friendship | `friendships/{uidA_uidB}` (uids sorted) | `{ users, requestedBy, status: pending or accepted, names }`; only the two people can read it; only the person asked can accept; either can delete |
+| Daily result | `dailyScores/{date_uid}` | create-only; readable by the owner and accepted friends, fetched by id (never queried) |
+| Daily histogram | `dailyStats/{date}` = `{ n, b<total>: players }` | written in the same batch as the result; a write may only add one player to that player's own bucket |
+
+**Friends.** A player finds another by friend code (Friends button above the game), the other accepts, and each then appears on the other's Daily leaderboard with their real strokes and penalties. Everyone's code and display name are created on first visit to Play.
+
+**Global percentile.** On the Daily result screen, "Everyone today" shows where the player's total sits: "Better than X% of the other N players" (ties count half), or "Top Y% of N players" when below the middle, plus a histogram of every total with the player's highlighted. `percentile(counts, total)` in `modes/daily.js` computes it from the `dailyStats` histogram, so no one has to read every score.
+
+**What the rules do and do not enforce.** They check shape and arithmetic (three holes, strokes 1 to 12, putts, penalties, total equals the sum, one result per player per day, the histogram write matches the stored result). They cannot replay the shots, so Daily stays honour-system; the shot log is stored so a later server-side check is possible. The date in a result is also taken from the player's clock.
+
+**Publishing the rules.** `firestore.rules` must be published in the Firebase console (Firestore Database, Rules, Publish) before Play can store or read anything. Until then the game still plays, but Daily results, friends and stats fail with a permission error.
+
 ## 14. Balance tool
 
 `tools/balance.mjs` plays seeded holes with a heuristic bot and reports scoring. It goes through the same meter maths, quantised inputs and resolver as a real player.
@@ -926,7 +949,9 @@ Other things worth knowing:
 
 ## 19. Not done and not verified
 
-**Milestone 5, integration, is not started:** the "Play" section in the HANDI app, Firebase-backed `storage` and `daily` adapters, `dailyScores` Firestore rules (create-only, document id equal to date plus uid, plausible ranges, bounded arrays, readable by the owner and accepted friends), the privacy toggle for game stats, and the app README.
+**Integration (section 13.1) is built but was not exercised against a live Firebase project.** It was written without access to one, so these are unverified until someone signs in and tries them: that the published rules accept every write the app makes (the rules were not run in the Firebase emulator), the friend request and accept flow between two real accounts, the Daily submit and percentile, and offline behaviour. The rules also need publishing by hand (13.1).
+
+**Not done:** a privacy toggle for game stats (names and scores are visible to friends, and the histogram is anonymous), removing a friend does not hide their past results from you beyond not listing them, a way to change the Daily date for testing in the app, and server-side replay of Daily shots.
 
 **Not verified:**
 
@@ -937,3 +962,5 @@ Other things worth knowing:
 - **The streak across two real days.** Covered by unit tests only.
 
 **Out of scope:** trees, elevation, slopes, a putting mini-game, hole-by-hole data in the handicap tracker, weather beyond wind, real-time multiplayer, and server-side score verification.
+
+**Revision (hazards and aiming aids).** Bunkers and water were enlarged and water made more common (sizes above; hazards were enlarged a second time after the first pass), the aim arrow was shortened to a direction pointer, and the power bar's yardage readout and landing dot were removed, so distance must be inferred from the bar and the max-range ring. This changed generated holes, so the golden hashes were re-pinned (Daily was not live). The decent bot's balance run after the change: +0.46 vs par, birdies 13.8%, double+ 8.7%, OB 4.2% per full driver. The bot reads exact values, so it does not feel the loss of the aids; real players will score worse.

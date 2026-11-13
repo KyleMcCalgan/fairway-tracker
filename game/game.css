@@ -40,6 +40,19 @@
   }
 }
 
+.hg-root.hg-light {
+  --hg-bg: #f3f5f1;
+  --hg-fg: #1a1f1b;
+  --hg-muted: #566158;
+  --hg-card: #ffffff;
+  --hg-line: #cfd6cf;
+  --hg-accent: #1b6e37;
+  --hg-accent-fg: #ffffff;
+  --hg-focus: #0b57d0;
+  --hg-warn: #b3261e;
+  color-scheme: light;
+}
+
 .hg-root *, .hg-root *::before, .hg-root *::after { box-sizing: border-box; }
 .hg-root h1, .hg-root h2, .hg-root p { margin: 0; }
 .hg-root [hidden] { display: none !important; }
@@ -160,13 +173,24 @@
   display: block;
   touch-action: manipulation;
 }
-.hg-mapbtn {
+.hg-tools {
   position: absolute;
   top: 8px;
   left: 8px;
+  display: flex;
+  gap: 6px;
+}
+.hg-mapbtn {
   min-height: 36px;
   padding: 4px 10px;
   font-size: 13px;
+}
+.hg-zoombtn {
+  min-height: 36px;
+  min-width: 36px;
+  padding: 4px 0;
+  font-size: 18px;
+  line-height: 1;
 }
 .hg-cardbox {
   position: absolute;
@@ -280,3 +304,18 @@
   .hg-hint { display: none; }
   .hg-swing { min-height: 48px; }
 }
+
+/* --- Global percentile histogram (Daily result) ------------------------------ */
+.hg-pct { font-size: 18px; font-weight: 700; line-height: 1.25; }
+.hg-hist {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  min-height: 84px;
+  margin: 10px 0 4px;
+  overflow-x: auto;
+}
+.hg-hist-col { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 2px; flex: 1 0 20px; }
+.hg-hist-bar { width: 100%; min-width: 14px; border-radius: 3px 3px 0 0; background: var(--hg-line); }
+.hg-hist-you .hg-hist-bar { background: var(--hg-accent); }
+.hg-hist-you span { color: var(--hg-fg); font-weight: 700; }

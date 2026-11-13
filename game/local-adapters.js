@@ -80,6 +80,20 @@ export function createLocalAdapters(opts = {}) {
       for (const f of FAKE_FRIENDS) rows.push(fakeScore(f, date, now()));
       return rows;
     },
+    // Invented "everyone" histogram for the standalone page, stable per date.
+    fetchGlobal(date) {
+      const rng = makeRng('stub-global|' + date);
+      const counts = {};
+      let n = 0;
+      for (let i = 0; i < 240; i++) {
+        const total = Math.max(7, 13 + rng.int(-3, 3) + rng.int(-2, 4));
+        counts[total] = (counts[total] || 0) + 1;
+        n++;
+      }
+      const mine = read('daily.score.' + date + '_' + UID);
+      if (mine) { counts[mine.total] = (counts[mine.total] || 0) + 1; n++; }
+      return { n, counts };
+    },
   };
 
   return { storage, daily };

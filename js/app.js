@@ -1,4 +1,5 @@
 import * as fb from './firebase.js';
+import { showPlay, hidePlay, resetPlay } from './play.js';
 
 let lastInfoTrigger = null;
 let rounds = []; // derived: this user's rounds, with the course name filled in
@@ -14,7 +15,7 @@ let toastTimeout;
 let modeUiInitialized = null; // the mode the estimator inputs were last set up for
 
 // Live Firestore data (the data model is described in firebase.js)
-let session = null; // { uid, email, stop }
+let session = null; // { uid, email, user, stop }
 let sessionReady = false;
 let catalogue = new Map(); // courseId -> { id, name, rating?, slope? }  shared by every user
 let myCourses = new Map(); // courseId -> { rating?, slope? }  this user's list + personal values
@@ -165,7 +166,7 @@ function onDataChange() {
 function startSession(user) {
   if (session?.uid === user.uid) return;
   stopSession();
-  session = { uid: user.uid, email: user.email || user.displayName || 'your account', stop: null };
+  session = { uid: user.uid, email: user.email || user.displayName || 'your account', user, stop: null };
   showAuth('loading');
   session.stop = fb.watchUserData(user.uid, {
     settings: (data) => {
@@ -197,6 +198,7 @@ function startSession(user) {
     'Signed in as ' + session.email + '. Your rounds and courses are saved to your account.';
 }
 function stopSession() {
+  resetPlay();
   session?.stop?.();
   session = null;
   sessionReady = false;
@@ -1322,8 +1324,11 @@ function switchView(v) {
       'Find or add the courses you play and set the rating and slope used for your handicap.',
     ],
     insights: ['Golf by the numbers', 'Patterns and performance trends.'],
+    play: ['HANDI Golf', 'A quick minigame: Endless practice, or the Daily round with your friends.'],
     guide: ['How this app works', 'A guide to the estimate, course ratings, slope, and your score window.'],
   };
+  if (v === 'play' && session) showPlay(session.user);
+  else hidePlay();
   $('pageTitle').textContent = titles[v][0];
   $('pageSubtitle').textContent = titles[v][1];
   window.scrollTo({ top: 0, behavior: 'instant' });

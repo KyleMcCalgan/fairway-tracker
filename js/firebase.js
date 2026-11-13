@@ -66,6 +66,9 @@ if (configured) {
   }
 }
 
+/** The Firestore instance, for the game's own data layer (js/game-firebase.js). */
+export const getDb = () => db;
+
 /* ----------------------------------------------------------------- auth */
 
 export const onUser = (callback) => onAuthStateChanged(auth, callback);

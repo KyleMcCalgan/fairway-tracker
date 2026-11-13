@@ -6,7 +6,7 @@ import { newHoleState, applyShot, aimCentre } from '../js/game/rules.js';
 import { makeRng } from '../js/game/rng.js';
 import {
   emptyDraft, checkDraft, statesFromDraft, buildResult, rankLeaderboard, nextStreak,
-  shareText, msToReset, formatCountdown,
+  shareText, msToReset, formatCountdown, percentile,
 } from '../js/game/modes/daily.js';
 import { createLocalAdapters, FAKE_FRIENDS, fakeScore } from '../game/local-adapters.js';
 
@@ -179,4 +179,51 @@ test('local adapters: storage round-trips, submit is create-only, stub leaderboa
   const late = FAKE_FRIENDS.map((f) => fakeScore(f, DATE, Date.UTC(2026, 10, 13, 23, 59, 0)));
   assert.ok(late.some((r) => r.total != null));
   for (const r of late) if (r.total != null) assert.ok(r.total >= 10 && r.total <= 17);
+});
+
+test('percentile: where a total sits among everyone who played', () => {
+  // 10 players: three on 10, four on 12 (you), three on 14.
+  const counts = { 10: 3, 12: 4, 14: 3 };
+  const p = percentile(counts, 12);
+  assert.equal(p.n, 10);
+  assert.equal(p.ahead, 3);
+  assert.equal(p.tied, 4);
+  assert.equal(p.behind, 3);
+  // Of the 9 others: 3 are worse, 3 tied (half credit each) => (3 + 1.5) / 9.
+  assert.ok(Math.abs(p.beat - 4.5 / 9) < 1e-12);
+  // The best total beats everyone else; the worst beats nobody.
+  assert.equal(percentile(counts, 10).beat, (7 + 2 / 2) / 9);
+  assert.equal(percentile({ 10: 3, 12: 4, 14: 1 }, 14).beat, 0);
+});
+
+test('percentile: your own result is counted even if the histogram lacks it', () => {
+  const p = percentile({ 12: 4, 14: 5 }, 11);
+  assert.equal(p.n, 10);
+  assert.equal(p.tied, 1);
+  assert.equal(p.beat, 1);
+});
+
+test('percentile: the first player of the day has nobody to compare with', () => {
+  assert.equal(percentile({}, 12).beat, null);
+  assert.equal(percentile({ 12: 1 }, 12).beat, null);
+  assert.equal(percentile(undefined, 12).beat, null);
+});
+
+test('percentile: bad histogram entries are ignored', () => {
+  const p = percentile({ 12: 2, x: 5, 13: -1, 14: 'a' }, 12);
+  assert.equal(p.n, 2);
+});
+
+test('local adapter offers a stable "everyone" histogram that includes your result', async () => {
+  const store = memStore();
+  const { daily } = createLocalAdapters({ store, date: '2026-11-13', now: () => Date.parse('2026-11-13T12:00:00Z') });
+  const a = await daily.fetchGlobal('2026-11-13');
+  const b = await daily.fetchGlobal('2026-11-13');
+  assert.deepEqual(a, b);
+  assert.equal(a.n, 240);
+  const holes = [0, 1, 2].map(() => ({ strokes: 4, putts: 2, penalties: 0, shots: [] }));
+  daily.submit({ date: '2026-11-13', genVersion: GEN_VERSION, holes, total: 12 });
+  const c = await daily.fetchGlobal('2026-11-13');
+  assert.equal(c.n, 241);
+  assert.equal(c.counts[12], a.counts[12] + 1 || 1);
 });

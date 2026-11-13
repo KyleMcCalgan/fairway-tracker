@@ -9,6 +9,7 @@
       href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9B%B3%3C/text%3E%3C/svg%3E"
     />
     <link rel="stylesheet" href="css/styles.css" />
+    <link rel="stylesheet" href="game/game.css" />
   </head>
   <body>
     <div class="auth" id="authScreen">
@@ -87,7 +88,8 @@
                   <path d="M3.5 3H12L9.5 5.1 12 7.2H3.5"></path>
                   <path d="M2 14h12"></path></svg></span
               >Courses</button
-            ><button class="nav" data-view="insights">▥ &nbsp; Statistics</button>
+            ><button class="nav" data-view="insights">▥ &nbsp; Statistics</button
+            ><button class="nav" data-view="play">⛳ &nbsp; Play</button>
           </div>
           <div class="nav-group">
             <small>GUIDE</small
@@ -428,6 +430,15 @@
             <div id="courseRatingTable" class="tablewrap"></div>
           </div>
         </section>
+        <section id="play" class="view">
+          <div class="play-toolbar">
+            <button class="btn small" id="friendsBtn" type="button">
+              Friends <span class="pill warn" id="friendsBadge" hidden></span>
+            </button>
+            <span class="hint">HANDI Golf: a quick minigame. Daily is the same three holes for everyone, once a day.</span>
+          </div>
+          <div id="gameHost" class="game-host"></div>
+        </section>
         <section id="guide" class="view">
           <div class="guide-hero">
             <div class="panel guide-panel guide-intro">
@@ -750,6 +761,15 @@
             </div>
           </div>
         </form>
+      </div>
+    </div>
+    <div class="modal-backdrop" id="friendsOverlay">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="friendsTitle">
+        <div class="modal-header">
+          <h2 id="friendsTitle">Friends</h2>
+          <button class="iconbtn" data-close="friendsOverlay" aria-label="Close">×</button>
+        </div>
+        <div id="friendsBody" class="friends-body"></div>
       </div>
     </div>
     <div class="modal-backdrop" id="courseOverlay">
