@@ -77,7 +77,10 @@ export function createPlay(root, cfg) {
   const canvas = h('canvas', { class: 'hg-canvas', role: 'img', 'aria-label': 'Course map' });
   const mapBtn = h('button', { class: 'hg-btn hg-mapbtn', type: 'button', 'aria-pressed': 'false', text: 'Whole hole' });
   const cardBox = h('div', { class: 'hg-cardbox', hidden: true });
-  const stage = h('div', { class: 'hg-stage' }, canvas, mapBtn, cardBox);
+  const zoomOutBtn = h('button', { class: 'hg-btn hg-zoombtn', type: 'button', 'aria-label': 'Zoom out', title: 'Zoom out', text: '−' });
+  const zoomInBtn = h('button', { class: 'hg-btn hg-zoombtn', type: 'button', 'aria-label': 'Zoom in', title: 'Zoom in', text: '+' });
+  const tools = h('div', { class: 'hg-tools' }, mapBtn, zoomOutBtn, zoomInBtn);
+  const stage = h('div', { class: 'hg-stage' }, canvas, tools, cardBox);
 
   const clubBtns = {};
   const clubRow = h('div', { class: 'hg-clubs', role: 'group', 'aria-label': 'Club' });
@@ -105,6 +108,8 @@ export function createPlay(root, cfg) {
   let ctx = null, cw = 0, ch = 0;
   let view = null, viewFrom = null, viewTo = null, viewT0 = 0;
   let bounds = null, boundsMax = 8, overview = false;
+  let zoomLvl = 0;    // extra zoom-out steps on the aiming view (display only)
+  const ZOOM_STEP = 1.5, ZOOM_MAX = 3;
   let raf = 0, busy = false, destroyed = false;
   const fx = { ball: { x: 0, y: 0, lift: 0, k: 1, show: true }, effects: [], label: null, rings: false };
 
@@ -147,7 +152,13 @@ export function createPlay(root, cfg) {
     const back = (c * Math.PI) / 180;
     pts.push([hs.pos[0] - 0.1 * r * Math.sin(back), hs.pos[1] - 0.1 * r * Math.cos(back)]);
     if (distToPin(hole, hs.pos) < r * 1.25) pts.push([hole.cup[0], hole.cup[1]]);
-    return bbox(pts);
+    const b = bbox(pts);
+    if (!zoomLvl) return b;
+    // Zoomed out: grow the frame about the ball so more of the hole shows.
+    const f = Math.pow(ZOOM_STEP, zoomLvl);
+    const cx = (b.minX + b.maxX) / 2, cy = (b.minY + b.maxY) / 2;
+    const hw = ((b.maxX - b.minX) / 2) * f, hh = ((b.maxY - b.minY) / 2) * f;
+    return { minX: cx - hw, maxX: cx + hw, minY: cy - hh, maxY: cy + hh };
   }
   function inView(p, margin) {
     const x = sx(view, p[0]), y = sy(view, p[1]);
@@ -182,11 +193,10 @@ export function createPlay(root, cfg) {
       let frac = null;
       if (phase === 'power') {
         frac = powerFrac(now - meter.p0, meter.powerMs);
-        carry = carryFor(club, hs.lie, quantisePower(frac));
       }
-      drawAim(ctx, view, hs.pos[0], hs.pos[1], range, centre, METER.aimHalfDeg, arrow, carry, locked);
+      drawAim(ctx, view, hs.pos[0], hs.pos[1], range, centre, METER.aimHalfDeg, arrow, null, locked);
       if (phase !== 'ready' || armed) {
-        drawPowerBar(ctx, view, frac, METER.powerSnap, carry != null ? Math.round(carry) + ' yds' : '', phase === 'power');
+        drawPowerBar(ctx, view, frac, METER.powerSnap, '', phase === 'power');
       }
     }
     if (fx.ball.show) drawBall(ctx, view, fx.ball.x, fx.ball.y, fx.ball.lift, fx.ball.k);
@@ -273,6 +283,9 @@ export function createPlay(root, cfg) {
       b.querySelector('.hg-club-yds').textContent = hole && !hs.done ? Math.round(maxCarry(c, hs.lie)) + ' yds' : '–';
     }
     mapBtn.disabled = !ready;
+    const zoomable = ready || phase === 'aim' || phase === 'power';
+    zoomOutBtn.disabled = !zoomable || overview || zoomLvl >= ZOOM_MAX;
+    zoomInBtn.disabled = !zoomable || overview || zoomLvl <= 0;
     mapBtn.setAttribute('aria-pressed', String(overview));
     let label = 'Swing', text = '';
     if (phase === 'aim') { label = 'Lock aim'; text = 'Tap anywhere, or press Space, to lock the direction.'; }
@@ -310,6 +323,13 @@ export function createPlay(root, cfg) {
     if (phase !== 'ready') return;
     overview = !overview;
     setBounds(overview ? holeBounds() : aimBounds(), true);
+    updateControls();
+  }
+
+  function zoomBy(d) {
+    if (!(phase === 'ready' || phase === 'aim' || phase === 'power') || overview) return;
+    zoomLvl = Math.max(0, Math.min(ZOOM_MAX, zoomLvl + d));
+    setBounds(aimBounds(), true);
     updateControls();
   }
 
@@ -478,6 +498,8 @@ export function createPlay(root, cfg) {
   });
   swingBtn.addEventListener('click', (e) => { if (phase === 'ready') startSwing(stamp(e)); });
   mapBtn.addEventListener('click', toggleOverview);
+  zoomOutBtn.addEventListener('click', () => zoomBy(1));
+  zoomInBtn.addEventListener('click', () => zoomBy(-1));
 
   function onKey(e) {
     if (destroyed || e.repeat || !el.isConnected || e.ctrlKey || e.metaKey || e.altKey) return;
@@ -504,7 +526,7 @@ export function createPlay(root, cfg) {
     holeNo = String(opts.holeNo || '');
     armed = opts.pendingAim ? { club: opts.pendingAim.club, angle: opts.pendingAim.angle } : null;
     if (armed) club = armed.club;
-    meter = null; busy = false; overview = false;
+    meter = null; busy = false; overview = false; zoomLvl = 0;
     fx.effects.length = 0; fx.label = null; fx.rings = false;
     hideCard();
     setBall(hs.pos);

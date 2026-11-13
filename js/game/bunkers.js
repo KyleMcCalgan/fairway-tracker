@@ -169,7 +169,8 @@ export function buildBunkers(rng, ctx, water) {
   // --- Greenside ---------------------------------------------------------
   const front = hEnd + PI;
   const slots = rng.shuffle([-50, 50, -95, 95, 0, 180]);
-  const nGreen = Math.min(3, Math.floor(rng.next() * (1.6 + 2.4 * d) + 0.3));
+  // Par 3s are all about the green, so they always get at least two greenside bunkers.
+  const nGreen = Math.min(3, Math.max(par === 3 ? 2 : 0, Math.floor(rng.next() * (1.6 + 2.4 * d) + 0.3)));
   for (let i = 0; i < nGreen; i++) {
     const slot = slots[i];
     const ac = front + (slot + rng.range(-15, 15)) * DEG;
@@ -207,7 +208,8 @@ export function buildBunkers(rng, ctx, water) {
   }
 
   // --- Rough -------------------------------------------------------------
-  const nScatter = Math.floor(rng.next() * (1 + 1.5 * d));
+  // Par 3s get none: every bunker on a par 3 sits by the green.
+  const nScatter = par > 3 ? Math.floor(rng.next() * (1 + 1.5 * d)) : 0;
   for (let i = 0; i < nScatter; i++) place('scatter', scatter, 3);
 
   return out;

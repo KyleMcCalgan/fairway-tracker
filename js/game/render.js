@@ -133,17 +133,23 @@ export function drawFlag(ctx, hole, view, k = 1) {
 // lift 0..1 draws the ball larger with a shadow below, to suggest height.
 export function drawBall(ctx, view, x, y, lift = 0, k = 1) {
   const px = sx(view, x), py = sy(view, y);
-  const r = 3.4 * k * (1 + 0.9 * lift);
+  const r = 5.5 * k * (1 + 0.9 * lift);
   if (lift > 0.02) {
     ctx.fillStyle = 'rgba(0,0,0,0.25)';
     ctx.beginPath();
-    ctx.arc(px + 5 * lift, py + 9 * lift, 3 * k, 0, Math.PI * 2);
+    ctx.arc(px + 6 * lift, py + 11 * lift, 4.5 * k, 0, Math.PI * 2);
     ctx.fill();
   }
   if (r < 0.3) return;
+  if (lift <= 0.02) { // resting: soft contact shadow and a highlight
+    ctx.fillStyle = 'rgba(0,0,0,0.28)';
+    ctx.beginPath();
+    ctx.arc(px + 1.2 * k, py + 1.8 * k, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
   ctx.fillStyle = COLORS.ball;
   ctx.strokeStyle = COLORS.ballLine;
-  ctx.lineWidth = 1;
+  ctx.lineWidth = 1.5;
   ctx.beginPath();
   ctx.arc(px, py - 6 * lift, r, 0, Math.PI * 2);
   ctx.fill();
@@ -160,6 +166,8 @@ export function drawRangeRing(ctx, view, x, y, r) {
   ctx.setLineDash([]);
 }
 
+const AIM_ARROW_FRAC = 0.3; // arrow length as a share of the club's max range
+
 // Aim: faint sweep limits plus the arrow. Angles in degrees, 0 = up, clockwise.
 export function drawAim(ctx, view, x, y, r, centreDeg, halfDeg, arrowDeg, carry, locked) {
   const px = sx(view, x), py = sy(view, y);
@@ -174,26 +182,45 @@ export function drawAim(ctx, view, x, y, r, centreDeg, halfDeg, arrowDeg, carry,
     ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(e[0], e[1]); ctx.stroke();
   }
   if (arrowDeg == null) return;
-  const tip = end(arrowDeg, r);
-  ctx.strokeStyle = locked ? COLORS.aim : 'rgba(255,255,255,0.95)';
-  ctx.lineWidth = locked ? 2.5 : 2;
-  ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(tip[0], tip[1]); ctx.stroke();
+  // The arrow is a short pointer, not a ruler: it shows direction only, so the
+  // player must judge distance against the max-range ring.
+  const tip = end(arrowDeg, r * AIM_ARROW_FRAC);
   const a = (arrowDeg * Math.PI) / 180;
-  const hx = Math.sin(a), hy = -Math.cos(a);
-  ctx.fillStyle = COLORS.aim;
-  ctx.beginPath();
-  ctx.moveTo(tip[0] + hx * 9, tip[1] + hy * 9);
-  ctx.lineTo(tip[0] - hy * 5, tip[1] + hx * 5);
-  ctx.lineTo(tip[0] + hy * 5, tip[1] - hx * 5);
-  ctx.closePath();
+  const hx = Math.sin(a), hy = -Math.cos(a); // unit vector along the arrow (screen space)
+  const nx = -hy, ny = hx;                   // unit normal
+  const len = Math.hypot(tip[0] - px, tip[1] - py);
+  const headL = Math.min(22, len * 0.45), headW = locked ? 11 : 9.5;
+  const baseX = tip[0] - hx * headL, baseY = tip[1] - hy * headL;
+  const sw = locked ? 3.5 : 2.5; // half-width of the shaft at the tail is thin, at the head is sw
+  // Tapered shaft + head as one polygon, with a dark outline for contrast on any surface.
+  const path = () => {
+    ctx.beginPath();
+    ctx.moveTo(px + nx * 0.8, py + ny * 0.8);
+    ctx.lineTo(baseX + nx * sw, baseY + ny * sw);
+    ctx.lineTo(baseX + nx * headW, baseY + ny * headW);
+    ctx.lineTo(tip[0], tip[1]);
+    ctx.lineTo(baseX - nx * headW, baseY - ny * headW);
+    ctx.lineTo(baseX - nx * sw, baseY - ny * sw);
+    ctx.lineTo(px - nx * 0.8, py - ny * 0.8);
+    ctx.closePath();
+  };
+  ctx.save();
+  ctx.lineJoin = 'round';
+  ctx.shadowColor = 'rgba(0,0,0,0.35)';
+  ctx.shadowBlur = 6;
+  path();
+  const g = ctx.createLinearGradient(px, py, tip[0], tip[1]);
+  g.addColorStop(0, 'rgba(255,255,255,0.15)');
+  g.addColorStop(0.5, locked ? 'rgba(255,224,102,0.95)' : 'rgba(255,255,255,0.9)');
+  g.addColorStop(1, locked ? '#ffd24a' : '#ffffff');
+  ctx.fillStyle = g;
   ctx.fill();
-  if (carry != null) {
-    const c = end(arrowDeg, carry);
-    ctx.fillStyle = COLORS.ball;
-    ctx.strokeStyle = COLORS.ballLine;
-    ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.arc(c[0], c[1], 4.5, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-  }
+  ctx.shadowColor = 'transparent';
+  ctx.strokeStyle = 'rgba(20,26,22,0.85)';
+  ctx.lineWidth = 1.5;
+  path();
+  ctx.stroke();
+  ctx.restore();
 }
 
 // Vertical power bar on the right edge of the canvas. frac 0..1, or null when idle.

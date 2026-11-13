@@ -12,14 +12,14 @@ import { runProfile, PROFILES } from '../tools/balance.mjs';
 const GOLDEN = {
   'version': 1,
   'holes': {
-    'golden-1': 'be73b31a',
-    'golden-2': 'bf3a4420',
-    'golden-3': 'd7b6eea0',
-    'golden-4': '8ac02e99',
-    'golden-5': '0b6b8d8b',
+    'golden-1': '63e90a98',
+    'golden-2': '7f5d97d9',
+    'golden-3': 'b779e33a',
+    'golden-4': 'f73db945',
+    'golden-5': '61ac77f0',
     'golden-6': 'ccdca5fb'
   },
-  'daily': 'b4b7732c',
+  'daily': '9e1d7c5c',
   'round': '601e9fff',
   'shotsUsed': 9
 };

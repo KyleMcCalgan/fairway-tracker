@@ -156,23 +156,23 @@ export const GEN = {
     greenGap: 0.5,           // minimum gap to the green
     obMargin: 3,             // minimum gap inside the OB line
     maxFairwayBlock: 0.5,    // never block more than this share of the fairway width
-    crescent: { off: [1, 5], length: [14, 30], depth: [4, 8] },
-    pot: { radius: [2.5, 4], off: [1, 3] },
-    guard: { length: [12, 28], depth: [5, 9] },
-    cross: { chance: 0.12, span: [0.4, 0.5], thick: [5, 8] },
-    scatter: { radius: [3, 7] },
-    cluster: { radius: [2.5, 4.5], count: [2, 3] },
+    crescent: { off: [1, 5], length: [34, 64], depth: [11, 18] },
+    pot: { radius: [6, 9.5], off: [1, 3] },
+    guard: { length: [30, 60], depth: [12, 20] },
+    cross: { chance: 0.12, span: [0.4, 0.5], thick: [12, 19] },
+    scatter: { radius: [8, 16] },
+    cluster: { radius: [6, 10], count: [2, 3] },
     landing: [0.85, 0.9],    // landing zones are this share of a club's max carry
     secondShot: [150, 215],  // par 5 second landing zone, beyond the first
   },
 
   water: {
-    anyChance: 0.34,         // share of holes with any water
+    anyChance: 0.65,         // share of holes with any water
     secondChance: 0.25,      // of those, share with two features
     kindWeights: [['stream', 0.3], ['river', 0.35], ['pond', 0.35]],
-    stream: { width: [3, 9], shortOfGreen: [30, 60], meander: [3, 8], overhang: 14, teeMin: 50, greenGap: 8 },
-    river: { length: [80, 250], off: [3, 15], width: [8, 20], teeMin: 25, greenGap: 12, obMargin: 9, taper: 25 },
-    pond: { radius: [8, 20], off: [4, 12], spread: 100 },
+    stream: { width: [10, 22], shortOfGreen: [30, 60], meander: [3, 8], overhang: 14, teeMin: 50, greenGap: 8 },
+    river: { length: [80, 250], off: [3, 15], width: [12, 36], teeMin: 25, greenGap: 12, obMargin: 9, taper: 25 },
+    pond: { radius: [18, 38], off: [4, 12], spread: 100 },
     teeGap: 20,
     greenGap: 4,
     waterGap: 6,

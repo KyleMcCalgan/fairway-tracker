@@ -40,10 +40,10 @@ test('10,000 seeds all pass validation', () => {
   }
   assert.ok(fallbacks <= 10, 'fallback holes: ' + fallbacks);
   assert.ok(retries < 2000, 'retries: ' + retries);
-  // Spec distribution: about 25/50/25 pars, about a third with water.
+  // Spec distribution: about 25/50/25 pars, about half with water.
   assert.ok(Math.abs(pars[3] / 10000 - 0.25) < 0.03);
   assert.ok(Math.abs(pars[4] / 10000 - 0.5) < 0.03);
-  assert.ok(Math.abs(water / 10000 - 0.33) < 0.06, 'water share ' + water / 10000);
+  assert.ok(Math.abs(water / 10000 - 0.5) < 0.06, 'water share ' + water / 10000);
 });
 
 test('polygon simplicity and the clearance rules hold (checked independently of the validator)', () => {
