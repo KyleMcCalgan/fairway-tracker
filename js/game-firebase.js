@@ -14,7 +14,7 @@
 // it changes after every shot, and Daily is an honour-system game anyway.
 
 import { getDb } from './firebase.js';
-import { normalizePrivacy } from './profile.js';
+import { normalizePrivacy, nameSearchKey } from './profile.js';
 import {
   doc,
   getDoc,
@@ -29,6 +29,10 @@ import {
   onSnapshot,
   serverTimestamp,
   increment,
+  orderBy,
+  startAt,
+  endAt,
+  limit,
 } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
 
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no 0/O/1/I
@@ -98,6 +102,7 @@ export function createGameBackend(user) {
     const batch = writeBatch(db);
     batch.update(doc(db, 'friendCodes', p.code), { name: clean });
     batch.set(gameDoc('profile'), { name: clean, code: p.code });
+    batch.set(doc(db, 'playerDirectory', uid), { name: clean, nameLower: nameSearchKey(clean) });
     await batch.commit();
     p.name = clean;
     return clean;
@@ -256,14 +261,9 @@ export function createGameBackend(user) {
     );
   }
 
-  async function addByCode(rawCode) {
-    const code = cleanCode(rawCode);
-    if (code.length !== 8) throw new Error('A friend code is 8 letters and numbers.');
+  async function addPlayer(other) {
     const me = await profile();
-    if (code === me.code) throw new Error('That is your own code.');
-    const found = await getDoc(doc(db, 'friendCodes', code));
-    if (!found.exists()) throw new Error('No player has that code. Check it and try again.');
-    const other = found.data();
+    if (other.uid === uid) throw new Error('You cannot add yourself.');
     const id = pairId(uid, other.uid);
     // A direct read of a missing friendship is denied by the rules because it
     // has no users field. Query our own friendships instead.
@@ -286,6 +286,28 @@ export function createGameBackend(user) {
     });
     return other.name;
   }
+
+  async function addByCode(rawCode) {
+    const code = cleanCode(rawCode);
+    if (code.length !== 8) throw new Error('A friend code is 8 letters and numbers.');
+    const found = await getDoc(doc(db, 'friendCodes', code));
+    if (!found.exists()) throw new Error('No player has that code. Check it and try again.');
+    return addPlayer(found.data());
+  }
+
+  const directoryRef = (who) => doc(db, 'playerDirectory', who);
+  async function searchPlayers(term) {
+    const key = nameSearchKey(term);
+    if (key.length < 2) throw new Error('Enter at least 2 characters to search.');
+    const results = await getDocs(query(collection(db, 'playerDirectory'), orderBy('nameLower'), startAt(key), endAt(key + '\uf8ff'), limit(20)));
+    return results.docs.filter((d) => d.id !== uid).map((d) => ({ uid: d.id, name: d.data().name }));
+  }
+  async function addByUser(otherUid) {
+    const found = await getDoc(directoryRef(otherUid));
+    if (!found.exists()) throw new Error('This player is no longer searchable.');
+    return addPlayer({ uid: found.id, name: found.data().name });
+  }
+  const publishDirectory = (name) => setDoc(directoryRef(uid), { name, nameLower: nameSearchKey(name) });
 
   const accept = (id) => updateDoc(doc(db, 'friendships', id), { status: 'accepted' });
   const remove = (id) => deleteDoc(doc(db, 'friendships', id));
@@ -323,7 +345,7 @@ export function createGameBackend(user) {
     onSnapshot(gameDoc('lifetime'), (s) => callback(s.exists() ? s.data() : null), onError);
 
   return {
-    uid, storage, daily, profile, setName, watchFriends, addByCode, accept, remove,
+    uid, storage, daily, profile, setName, watchFriends, addByCode, searchPlayers, addByUser, publishDirectory, accept, remove,
     loadPrivacy, savePrivacy, publishShared, fetchShared, watchLifetime,
   };
 }

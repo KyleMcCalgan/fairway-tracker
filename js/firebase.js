@@ -159,7 +159,7 @@ export async function deleteAccount() {
   const friendships = await getDocs(query(collection(db, 'friendships'), where('users', 'array-contains', uid)));
   friendships.docs.forEach((d) => refs.push(d.ref));
   if (code) refs.push(doc(db, 'friendCodes', code));
-  refs.push(doc(db, 'sharedStats', uid), doc(db, 'users', uid));
+  refs.push(doc(db, 'playerDirectory', uid), doc(db, 'sharedStats', uid), doc(db, 'users', uid));
 
   await deleteAll(refs);
   await deleteUser(user);

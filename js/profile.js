@@ -27,6 +27,8 @@ const round2 = (n) => Math.round(n * 100) / 100;
 const clip = (s, n) => String(s ?? '').slice(0, n);
 
 export const shortName = (s) => String(s || '').replace(/\s+/g, ' ').trim().slice(0, MAX_NAME);
+// Use the same key for writing a directory entry and looking up a prefix.
+export const nameSearchKey = (s) => shortName(s).toLowerCase().slice(0, MAX_NAME);
 
 // Everything is shared until the owner switches it off.
 export function normalizePrivacy(raw) {

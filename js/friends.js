@@ -27,6 +27,9 @@ let friends = [];
 let viewing = null; // a friend's uid while their profile is open
 let message = { text: '', error: false };
 let draftCode = '';
+let searchTerm = '';
+let searchResults = null;
+let searching = false;
 const summaries = new Map(); // friend uid -> shared summary | null (none shared) ; absent = not fetched yet
 let fetching = false;
 
@@ -48,6 +51,9 @@ export function resetFriends() {
   viewing = null;
   summaries.clear();
   draftCode = '';
+  searchTerm = '';
+  searchResults = null;
+  searching = false;
   message = { text: '', error: false };
   const page = $('friendsPage');
   if (page) page.innerHTML = '';
@@ -122,7 +128,17 @@ function listHTML() {
   return `
     <div class="friends-top">
       <div class="panel">
-        <div class="panel-head"><div><h2>Add a friend</h2><p>Ask them for their 8-character friend code.</p></div></div>
+        <div class="panel-head"><div><h2>Find a player</h2><p>Search for a player by their display name. Up to 20 matches are shown.</p></div></div>
+        <form class="set-inline" id="searchForm" novalidate>
+          <input id="playerSearch" type="search" maxlength="24" autocomplete="off" placeholder="Search names" aria-label="Search player names" value="${esc(searchTerm)}" ${searching ? 'disabled' : ''} />
+          <button class="btn primary" type="submit"${searching ? ' disabled' : ''}>${searching ? 'Searching…' : 'Search'}</button>
+        </form>
+        ${searchResults === null ? '' : searchResults.length ? `<div class="friend-section">${searchResults.map((p) => {
+          const existing = friends.find((f) => f.uid === p.uid);
+          const status = existing ? (existing.status === 'friend' ? 'Friends' : existing.status === 'incoming' ? 'Respond below' : 'Request sent') : '';
+          return `<div class="friend-row">${avatar(p.uid, p.name)}<span class="friend-name">${esc(p.name)} <span class="hint">#${esc(p.uid.slice(-6))}</span></span>${status ? `<span class="hint">${status}</span>` : `<button class="btn small" type="button" data-act="add-player" data-id="${esc(p.uid)}">Add</button>`}</div>`;
+        }).join('')}</div>` : '<div class="hint friend-section">No matching players. They may need to open Handi first.</div>'}
+        <div class="hint friend-section">Or add someone using their 8-character friend code.</div>
         <form class="set-inline" id="addForm" novalidate>
           <input id="friendCodeInput" type="text" maxlength="12" autocomplete="off" autocapitalize="characters" spellcheck="false"
             placeholder="e.g. K7M2QP9X" aria-label="Friend code" value="${esc(draftCode)}" />
@@ -136,6 +152,7 @@ function listHTML() {
           ? `<div class="set-inline"><output class="friend-code">${esc(profile.code)}</output><button class="btn" type="button" data-act="copy">Copy</button></div>`
           : '<div class="hint">Setting up your profile…</div>'}
         <div class="hint" style="margin-top:10px">Change your name or choose what friends can see in <button class="link-btn" type="button" data-go-settings>Settings</button>.</div>
+        <div class="hint friend-section">Signed-in players can find you by your display name${profile && social.getBackend() ? `, ${esc(profile.name)} #${esc(social.getBackend().uid.slice(-6))}` : ''}. Your stats stay private until you accept a request.</div>
       </div>
     </div>
     ${incoming.length ? `<div class="panel friend-section"><div class="panel-head"><div><h2>Requests</h2><p>People who want to be your friend.</p></div></div>${incoming
@@ -233,12 +250,12 @@ function profileHTML(f) {
 export function renderFriends() {
   const page = $('friendsPage');
   if (!page) return;
-  const hadFocus = document.activeElement && document.activeElement.id === 'friendCodeInput';
+  const focusedId = document.activeElement && document.activeElement.id;
   const friend = viewing && friends.find((f) => f.uid === viewing && f.status === 'friend');
   page.innerHTML = friend ? profileHTML(friend) : listHTML();
   if (!friend) {
-    const input = $('friendCodeInput');
-    if (input && hadFocus) {
+    const input = ['friendCodeInput', 'playerSearch'].includes(focusedId) && $(focusedId);
+    if (input) {
       input.focus();
       input.setSelectionRange(input.value.length, input.value.length);
     }
@@ -279,6 +296,10 @@ async function onClick(evt) {
     } else if (act === 'accept') {
       await backend.accept(id);
       host.toast('Friend added');
+    } else if (act === 'add-player') {
+      button.disabled = true;
+      const who = await backend.addByUser(id);
+      setMessage('Request sent to ' + who + '. They will see it in their Friends list.');
     } else if (act === 'remove') {
       if (name && !confirm('Remove ' + name + ' from your friends?')) return;
       await backend.remove(id);
@@ -291,6 +312,27 @@ async function onClick(evt) {
 }
 
 async function onAdd(evt) {
+  if (evt.target.id === 'searchForm') {
+    evt.preventDefault();
+    const backend = social.getBackend();
+    if (!backend || searching) return;
+    searchTerm = $('playerSearch').value;
+    searching = true;
+    setMessage('');
+    try {
+      const results = await backend.searchPlayers(searchTerm);
+      if (social.getBackend() !== backend) return;
+      searchResults = results;
+    } catch (error) {
+      if (social.getBackend() !== backend) return;
+      searchResults = null;
+      message = { text: error.message || 'Could not search. Try again.', error: true };
+    } finally {
+      searching = false;
+      if (social.getBackend() === backend) renderFriends();
+    }
+    return;
+  }
   if (evt.target.id !== 'addForm') return;
   evt.preventDefault();
   const backend = social.getBackend();
@@ -317,5 +359,6 @@ export function initFriends(callbacks) {
   page.addEventListener('submit', onAdd);
   page.addEventListener('input', (e) => {
     if (e.target.id === 'friendCodeInput') draftCode = e.target.value;
+    if (e.target.id === 'playerSearch') searchTerm = e.target.value;
   });
 }

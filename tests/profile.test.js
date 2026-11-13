@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  PRIVACY_KEYS, normalizePrivacy, buildShared, signature, liveDailyStreak, timeAgo, avatarColors, initial, comparable, shortName,
+  PRIVACY_KEYS, normalizePrivacy, buildShared, signature, liveDailyStreak, timeAgo, avatarColors, initial, comparable, shortName, nameSearchKey,
 } from '../js/profile.js';
 
 const rounds = [
@@ -14,6 +14,12 @@ const rounds = [
   { id: 'g', date: '2026-03-20', course: 'Delta GC', score: 91, par: 72, qualifying: true },
 ];
 const lifetime = { holes: 20, strokes: 82, par: 80, bestStreak: 4, birdies: 3, eagles: 1, holesInOne: 0, ob: 5, daily: { streak: 3, best: 6, lastDate: '2026-03-20' } };
+
+test('name search uses a consistent case-insensitive, whitespace-normalized prefix', () => {
+  assert.equal(nameSearchKey('  SaM   Lee '), 'sam lee');
+  assert.ok(nameSearchKey(' Sam Lee ').startsWith(nameSearchKey(' SAM ')));
+  assert.equal(nameSearchKey('İ'.repeat(24)).length, 24);
+});
 
 test('privacy defaults to everything on and ignores junk', () => {
   assert.deepEqual(normalizePrivacy(undefined), { handicap: true, rounds: true, recent: true, game: true });

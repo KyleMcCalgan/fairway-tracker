@@ -267,6 +267,18 @@ service cloud.firestore {
       allow delete: if signedIn() && resource.data.uid == request.auth.uid;
     }
 
+    // Search directory. Only names are public to signed-in players.
+    match /playerDirectory/{ownerUid} {
+      allow get: if signedIn();
+      allow list: if signedIn() && request.query.limit != null && request.query.limit <= 20;
+      allow create, update: if isOwner(ownerUid)
+        && request.resource.data.keys().hasOnly(['name', 'nameLower'])
+        && request.resource.data.keys().hasAll(['name', 'nameLower'])
+        && validName(request.resource.data.name)
+        && validName(request.resource.data.nameLower);
+      allow delete: if isOwner(ownerUid);
+    }
+
     // What a player shares with friends. See js/profile.js for how it is built.
     match /sharedStats/{ownerUid} {
       allow read: if signedIn() && (request.auth.uid == ownerUid || areFriends(ownerUid));

@@ -7,7 +7,7 @@ A personal handicap tracker that runs entirely in the browser. It is a static si
 ## Features
 
 - Accounts: email + password or Google, with password reset, profile settings and account deletion.
-- Friends: add by code, accept or decline requests, and choose which handicap, round and game statistics accepted friends can see.
+- Friends: find players by display name or add by code, accept or decline requests, and choose which handicap, round and game statistics accepted friends can see. Display names are searchable by signed-in players; existing players appear after they next sign in.
 - Rounds: add, edit, delete; mark rounds as qualifying or not.
 - Handicap estimate in two modes: over par, or course differential `(score − Course Rating) × 113 / Slope Rating`.
 - WHS score-count schedule, or a custom "best X of latest Y" window.
@@ -30,6 +30,7 @@ The result is an **estimate**, not an official Handicap Index. See the in-app gu
 | `users/{uid}/game/{docId}`         | Game stats, profile and sharing preferences                       | Only you                |
 | `friendCodes/{code}`               | Friend code lookup and display name                               | Signed-in users with the code |
 | `friendships/{pair}`               | Friend requests and accepted friendships                          | The two players         |
+| `playerDirectory/{uid}`           | Searchable display name                                           | Any signed-in user      |
 | `sharedStats/{uid}`                | Profile summary according to your sharing choices                 | You and accepted friends |
 | `dailyScores/{date_uid}`           | Daily game result                                                 | You and accepted friends |
 | `dailyStats/{date}`                | Daily score histogram                                             | Any signed-in user      |

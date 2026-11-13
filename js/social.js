@@ -46,6 +46,7 @@ export function startSocial(user) {
     if (backend !== mine) return;
     profile = p;
     ready.profile = true;
+    if (p.code) mine.publishDirectory(p.name).catch((e) => console.warn('could not publish name for search', e));
     notifyProfile();
     schedulePublish();
   });
