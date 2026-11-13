@@ -1,0 +1,282 @@
+/* HANDI Golf: the game's own styles. Everything is scoped under .hg-root, so
+   this file can be loaded by any host page without touching its styles. */
+
+.hg-root {
+  --hg-bg: #f3f5f1;
+  --hg-fg: #1a1f1b;
+  --hg-muted: #566158;
+  --hg-card: #ffffff;
+  --hg-line: #cfd6cf;
+  --hg-accent: #1b6e37;
+  --hg-accent-fg: #ffffff;
+  --hg-focus: #0b57d0;
+  --hg-warn: #b3261e;
+  color-scheme: light;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  max-width: 620px;
+  margin: 0 auto;
+  background: var(--hg-bg);
+  color: var(--hg-fg);
+  font: 14px/1.35 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  -webkit-text-size-adjust: 100%;
+}
+
+@media (prefers-color-scheme: dark) {
+  .hg-root {
+    --hg-bg: #141815;
+    --hg-fg: #e8ede8;
+    --hg-muted: #a0aba2;
+    --hg-card: #1e2420;
+    --hg-line: #39423b;
+    --hg-accent: #6fd08c;
+    --hg-accent-fg: #0d1a11;
+    --hg-focus: #9cc2ff;
+    --hg-warn: #ffb4ab;
+    color-scheme: dark;
+  }
+}
+
+.hg-root *, .hg-root *::before, .hg-root *::after { box-sizing: border-box; }
+.hg-root h1, .hg-root h2, .hg-root p { margin: 0; }
+.hg-root [hidden] { display: none !important; }
+
+.hg-root :focus-visible {
+  outline: 3px solid var(--hg-focus);
+  outline-offset: 2px;
+}
+
+.hg-sr {
+  position: absolute;
+  width: 1px; height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* --- Buttons and inputs ------------------------------------------------- */
+
+.hg-btn {
+  font: inherit;
+  font-weight: 600;
+  min-height: 42px;
+  padding: 6px 12px;
+  border: 1px solid var(--hg-line);
+  border-radius: 8px;
+  background: var(--hg-card);
+  color: var(--hg-fg);
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.hg-btn:disabled, .hg-btn[aria-disabled='true'] { opacity: 0.5; cursor: default; }
+.hg-btn.hg-small { min-height: 36px; padding: 4px 10px; font-size: 13px; }
+.hg-btn.hg-primary,
+.hg-btn[aria-pressed='true'] {
+  background: var(--hg-accent);
+  border-color: var(--hg-accent);
+  color: var(--hg-accent-fg);
+}
+.hg-input {
+  font: inherit;
+  min-height: 42px;
+  padding: 6px 10px;
+  border: 1px solid var(--hg-line);
+  border-radius: 8px;
+  background: var(--hg-card);
+  color: var(--hg-fg);
+  width: 100%;
+}
+.hg-note { color: var(--hg-muted); font-size: 13px; }
+.hg-mono { font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace; }
+.hg-select { user-select: all; }
+
+/* --- Shell ---------------------------------------------------------------- */
+
+.hg-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--hg-line);
+}
+.hg-header h1 { font-size: 16px; margin-right: auto; white-space: nowrap; }
+.hg-tabs { display: flex; gap: 4px; }
+.hg-tab { min-height: 36px; padding: 4px 10px; font-size: 13px; }
+
+.hg-body, .hg-mode, .hg-playroot, .hg-play {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.hg-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 10px;
+  font-size: 13px;
+}
+.hg-bar-main { font-weight: 600; min-width: 0; }
+.hg-bar-main { white-space: nowrap; }
+.hg-bar-btns { display: flex; gap: 4px; justify-content: flex-end; min-width: 0; }
+.hg-seedbtn { min-width: 0; max-width: 11.5em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* --- HUD ------------------------------------------------------------------ */
+
+.hg-hud {
+  display: grid;
+  grid-template-columns: 0.7fr 0.6fr 0.9fr 1.1fr 1.25fr 1.1fr;
+  gap: 2px;
+  padding: 4px 8px 6px;
+}
+.hg-chip { display: flex; flex-direction: column; min-width: 0; text-align: center; }
+.hg-chip-k { font-size: 10.5px; color: var(--hg-muted); text-transform: uppercase; letter-spacing: 0.03em; }
+.hg-chip-v { font-size: 13.5px; font-weight: 700; white-space: nowrap; }
+.hg-windarrow { display: inline-block; font-size: 15px; line-height: 1; font-weight: 900; }
+
+/* --- Stage ---------------------------------------------------------------- */
+
+.hg-stage {
+  position: relative;
+  flex: 1;
+  min-height: 170px;
+  overflow: hidden;
+  background: #27332b;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.hg-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: manipulation;
+}
+.hg-mapbtn {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  min-height: 36px;
+  padding: 4px 10px;
+  font-size: 13px;
+}
+.hg-cardbox {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 12px;
+  background: rgba(10, 14, 11, 0.45);
+  overflow: auto;
+}
+.hg-card {
+  width: 100%;
+  max-width: 360px;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid var(--hg-line);
+  background: var(--hg-card);
+  color: var(--hg-fg);
+  display: grid;
+  gap: 8px;
+}
+.hg-card h2 { font-size: 22px; }
+.hg-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+.hg-actions .hg-btn { flex: 1 1 auto; }
+
+/* --- Controls ------------------------------------------------------------- */
+
+.hg-controls { padding: 8px 10px 10px; display: grid; gap: 8px; }
+.hg-clubs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.hg-club { display: flex; flex-direction: column; align-items: center; line-height: 1.2; padding: 4px; }
+.hg-club-yds { font-size: 12px; font-weight: 500; }
+.hg-swing { min-height: 58px; font-size: 19px; background: var(--hg-accent); border-color: var(--hg-accent); color: var(--hg-accent-fg); }
+.hg-hint { color: var(--hg-muted); font-size: 12px; min-height: 1.35em; text-align: center; }
+
+/* --- Dialogs -------------------------------------------------------------- */
+
+.hg-dialog {
+  width: min(92vw, 480px);
+  max-height: 88vh;
+  padding: 0;
+  border: 1px solid var(--hg-line);
+  border-radius: 12px;
+  background: var(--hg-card);
+  color: var(--hg-fg);
+}
+.hg-dialog::backdrop { background: rgba(0, 0, 0, 0.5); }
+.hg-dialog-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--hg-line);
+}
+.hg-dialog-head h2 { font-size: 17px; }
+.hg-dialog-body { padding: 12px; display: grid; gap: 10px; overflow: auto; }
+.hg-dialog-body > div { display: grid; gap: 10px; }
+.hg-form { display: grid; gap: 6px; margin-top: 6px; }
+.hg-form label, .hg-field label { font-weight: 600; }
+.hg-field { display: grid; gap: 4px; }
+.hg-range { display: flex; align-items: center; gap: 10px; }
+.hg-range input { flex: 1; min-height: 32px; }
+.hg-settings input[type='checkbox'] { width: 20px; height: 20px; vertical-align: -4px; margin: 0 4px 0 0; }
+
+.hg-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.hg-table th, .hg-table td { padding: 5px 6px; text-align: left; border-bottom: 1px solid var(--hg-line); }
+.hg-table tfoot th, .hg-table tfoot td { font-weight: 700; border-bottom: 0; }
+.hg-table .hg-you td, .hg-table .hg-you th { font-weight: 700; }
+.hg-table .hg-idle td { color: var(--hg-muted); }
+
+.hg-stats { display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; margin: 0; }
+.hg-stats dt { color: var(--hg-muted); }
+.hg-stats dd { margin: 0; font-weight: 700; text-align: right; }
+
+/* --- Daily ---------------------------------------------------------------- */
+
+.hg-daily {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 14px 12px 20px;
+  display: grid;
+  gap: 12px;
+  align-content: start;
+}
+.hg-daily h2 { font-size: 20px; }
+.hg-daily h3 { font-size: 15px; margin: 0; }
+.hg-panel {
+  padding: 12px;
+  border: 1px solid var(--hg-line);
+  border-radius: 12px;
+  background: var(--hg-card);
+  display: grid;
+  gap: 8px;
+}
+.hg-big { font-size: 30px; font-weight: 800; line-height: 1.1; }
+.hg-countdown { font-variant-numeric: tabular-nums; font-weight: 700; }
+.hg-holes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.hg-holes > div { border: 1px solid var(--hg-line); border-radius: 8px; padding: 6px; text-align: center; }
+.hg-holes b { display: block; font-size: 18px; }
+.hg-share {
+  white-space: pre-wrap;
+  font: 13px/1.4 ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  padding: 8px;
+  border: 1px dashed var(--hg-line);
+  border-radius: 8px;
+  margin: 0;
+}
+
+@media (max-height: 560px) {
+  .hg-hint { display: none; }
+  .hg-swing { min-height: 48px; }
+}
