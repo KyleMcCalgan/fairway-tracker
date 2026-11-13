@@ -581,8 +581,7 @@ export function toneFor(strokes, par, state) {
   return d <= -2 ? 'eagle' : d === -1 ? 'birdie' : d === 0 ? 'par' : d === 1 ? 'bogey' : d === 2 ? 'double' : 'bad';
 }
 
-// Result card shown over the map when a hole ends. A coloured header says how
-// it went, tiles give the numbers, then any notes and the actions.
+// Result card shown over the map when a hole ends: outcome, numbers and actions.
 //   { title, tone, subtitle, tiles: [[label, value], ...], lines, extra, actions }
 export function resultCard({ title, tone, subtitle, tiles, lines, extra, actions }) {
   const btns = (actions || []).map((a) => {

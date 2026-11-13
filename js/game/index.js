@@ -23,7 +23,7 @@
 import { METER } from './constants.js';
 import { h, openDialog } from './ui.js';
 import { createEndless } from './modes/endless.js';
-import { createDaily } from './modes/daily.js';
+import { createDaily } from './modes/daily.js?v=20261114-1';
 
 function memoryStorage() {
   let lifetime = null, settings = null;

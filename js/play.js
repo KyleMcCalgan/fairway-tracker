@@ -3,7 +3,7 @@
 // data layer and docs/game.md for the game. Friends are managed on the Friends
 // page (js/friends.js); this view only shows a button that opens it.
 
-import { mount } from './game/index.js';
+import { mount } from './game/index.js?v=20261114-1';
 import { startSocial, subscribeFriends } from './social.js?v=20261113-2';
 
 const $ = (id) => document.getElementById(id);

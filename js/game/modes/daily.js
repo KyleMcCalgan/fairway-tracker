@@ -100,6 +100,8 @@ export function nextStreak(prev, date) {
 }
 
 
+const scoreEmoji = (d) => (d <= -2 ? '🦅' : d === -1 ? '🐦' : d === 0 ? '🟢' : d === 1 ? '🟡' : d === 2 ? '🟠' : '🔴');
+
 // Share text: scores relative to par only. Nothing about the hole layouts,
 // and not even which hole was the par 3, 4 or 5.
 export function shareText(date, pars, strokes, streak) {
@@ -108,9 +110,9 @@ export function shareText(date, pars, strokes, streak) {
   const lines = [
     'Handi Golf Daily ' + date,
     total + ' strokes (' + formatVsPar(total - par) + ')',
-    strokes.map((s, i) => formatVsPar(s - pars[i])).join('  '),
+    strokes.map((s, i) => scoreEmoji(s - pars[i])).join(' '),
   ];
-  if (streak > 1) lines.push(streak + ' day streak');
+  if (streak > 1) lines.push('🔥 ' + streak + ' day streak');
   return lines.join('\n');
 }
 

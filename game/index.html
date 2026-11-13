@@ -6,7 +6,7 @@
 <meta name="color-scheme" content="light dark">
 <title>Handi Golf</title>
 <link rel="icon" href="data:,">
-<link rel="stylesheet" href="game.css">
+<link rel="stylesheet" href="game.css?v=20261114-1">
 <style>
   html, body { height: 100%; margin: 0; }
   body { background: #e6e9e4; overflow: hidden; }
@@ -21,7 +21,7 @@
 <script type="module">
   // Standalone page: mounts the game with local-only adapters. No login, no
   // database, no network. Dev aids: ?mode=daily, ?seed=abc, ?date=YYYY-MM-DD.
-  import { mount } from '../js/game/index.js';
+  import { mount } from '../js/game/index.js?v=20261114-1';
   import { createLocalAdapters } from './local-adapters.js';
 
   const q = new URLSearchParams(location.search);
