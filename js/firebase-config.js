@@ -12,10 +12,10 @@
  * rules in firestore.rules, not by keeping this config secret.
  */
 export const firebaseConfig = {
-  apiKey: 'PASTE_API_KEY',
-  authDomain: 'PASTE_PROJECT_ID.firebaseapp.com',
-  projectId: 'PASTE_PROJECT_ID',
-  storageBucket: 'PASTE_PROJECT_ID.firebasestorage.app',
-  messagingSenderId: 'PASTE_MESSAGING_SENDER_ID',
-  appId: 'PASTE_APP_ID',
+  apiKey: 'AIzaSyBRIw6WNWaLhqg2fVbrXczXFvQhcNLXRTc',
+  authDomain: 'handi-golf.firebaseapp.com',
+  projectId: 'handi-golf',
+  storageBucket: 'handi-golf.firebasestorage.app',
+  messagingSenderId: '452259478885',
+  appId: '1:452259478885:web:c82b9dfe3094231867f58c',
 };
