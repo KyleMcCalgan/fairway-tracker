@@ -1,8 +1,8 @@
-# HANDI Golf: how the minigame works
+# Handi Golf: how the minigame works
 
-This document describes the HANDI Golf minigame as it is built: how a hole is generated from a seed, how a shot is resolved, how the play screen drives both, and how the two modes sit on top. It replaces the original planning document, which is kept in git history (commit `774f340`).
+This document describes the Handi Golf minigame as it is built: how a hole is generated from a seed, how a shot is resolved, how the play screen drives both, and how the two modes sit on top. It replaces the original planning document, which is kept in git history (commit `774f340`).
 
-**Status.** Milestones 1 to 4 are built on branch `game-standalone`: generator and gallery, shot mechanics and Endless mode, balance tool and tuning, and Daily mode against a local stub. Milestone 5 (integration into the HANDI app) is built too: a "Play" view in the app, Firebase-backed adapters, a friends system, a friends leaderboard and a global percentile (section 13.1). The standalone page (`game/index.html`) still runs fully offline, with no login and no network calls.
+**Status.** Milestones 1 to 4 are built on branch `game-standalone`: generator and gallery, shot mechanics and Endless mode, balance tool and tuning, and Daily mode against a local stub. Milestone 5 (integration into the Handi app) is built too: a "Play" view in the app, Firebase-backed adapters, a friends system, a friends leaderboard and a global percentile (section 13.1). The standalone page (`game/index.html`) still runs fully offline, with no login and no network calls.
 
 Every number quoted here comes from `js/game/constants.js`. If this document and that file disagree, the file is right.
 
@@ -53,8 +53,8 @@ python -m http.server 8000
 
 | Page | URL |
 |---|---|
-| Game | `http://localhost:8000/game/index.html` |
-| Game, Daily tab | `http://localhost:8000/game/index.html?mode=daily` |
+| Game (opens on Daily) | `http://localhost:8000/game/index.html` |
+| Game, Endless tab | `http://localhost:8000/game/index.html?mode=endless` |
 | Gallery | `http://localhost:8000/tools/gallery.html` |
 
 Development query parameters on the game page: `?seed=abc` starts Endless on that seed, and `?date=YYYY-MM-DD` makes Daily use that date instead of today.
@@ -105,7 +105,7 @@ fairway-tracker/
     math.test.js  generate.test.js  play.test.js  daily.test.js  golden.test.js
 ```
 
-"Pure" means no DOM, no `Math.random`, no `Date`, no network and no Firebase. Those modules run unchanged in Node, which is how they are tested. `render.js`, `ui.js`, the two modes and `index.js` are the only parts that touch the DOM. Nothing in `js/game` or `game/` imports from the rest of the HANDI app.
+"Pure" means no DOM, no `Math.random`, no `Date`, no network and no Firebase. Those modules run unchanged in Node, which is how they are tested. `render.js`, `ui.js`, the two modes and `index.js` are the only parts that touch the DOM. Nothing in `js/game` or `game/` imports from the rest of the Handi app.
 
 How the pieces call each other:
 
@@ -757,13 +757,13 @@ Players level on strokes and penalties share a rank. Friends who have not played
 ### 12.7 Share text
 
 ```
-HANDI Golf Daily 2026-11-13
+Handi Golf Daily 2026-11-13
 13 strokes (+1)
-🐦 🟢 🟠
-🔥 4 day streak
+−1  E  +2
+4 day streak
 ```
 
-One symbol per hole by score versus par: eagle or better 🦅, birdie 🐦, par 🟢, bogey 🟡, double 🟠, worse 🔴. The streak line appears from day 2. Nothing about seeds, yardages, layouts, or even which hole was the par 3.
+One entry per hole giving the score versus par (E for even). The streak line appears from day 2. Nothing about seeds, yardages, layouts, or even which hole was the par 3.
 
 ### 12.8 Reset and countdown
 
@@ -809,7 +809,7 @@ Without a `storage` adapter the game keeps everything in memory. Without a `dail
 - `storage` writes JSON to `localStorage` under keys starting `handi.game.`: `lifetime`, `settings`, `daily.draft.<date>.local` and `daily.score.<date>_local`. If `localStorage` is blocked it falls back to memory.
 - `daily` is a stub backend. `getToday()` reads the clock (or the `?date=` override). `submit` is create-only: a second submit for the same date returns the first result unchanged. `fetchLeaderboard` returns your row plus five invented friends, each labelled "(demo)". A fake friend's score is seeded by the date and their name, so it is stable all day, and it only appears once that friend's invented tee time has passed; about one in five does not play at all.
 
-### 13.1 In the HANDI app
+### 13.1 In the Handi app
 
 The app's "Play" view (`js/play.js`) mounts the game with `theme: 'light'` and the Firestore adapters from `js/game-firebase.js`. The game is mounted when the view opens and unmounted when the user leaves it, so an Endless session scorecard is lost on navigation; a Daily round in progress is not, because its draft is saved after every locked tap.
 

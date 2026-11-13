@@ -6,7 +6,9 @@ rules_version = '2';
 //   users/{uid}                      settings,       private to that user
 //   users/{uid}/rounds/{roundId}     rounds,         private to that user
 //   users/{uid}/myCourses/{courseId} course list and personal rating/slope, private to that user
-//   users/{uid}/game/{docId}         HANDI Golf stats, settings and profile, private to that user
+//   users/{uid}/game/{docId}         Handi Golf stats, settings, profile and sharing choices, private to that user
+//   sharedStats/{uid}                what a player chooses to show friends (handicap, recent rounds, game
+//                                    stats); written by the owner, readable by the owner and accepted friends
 //   friendCodes/{code}               code -> { uid, name }; readable only by exact code (no listing)
 //   friendships/{uidA_uidB}          friend requests and friendships, visible to the two people
 //   dailyScores/{date_uid}           one Daily result per player per day, create-only; readable by
@@ -135,6 +137,70 @@ service cloud.firestore {
       return 'b' + string(getAfter(myScorePath(date)).data.total);
     }
 
+    // ---- Shared profile summary -----------------------------------------------
+    //
+    // Firestore stops evaluating a request after 1000 expressions, and a summary with five recent
+    // rounds is close to that, so these checks stick to what matters: a fixed set of keys, the
+    // right types and sane sizes. Only the owner can write this document, and it is only ever
+    // shown through escaped text, so tight numeric ranges would add cost without adding safety.
+
+    function validBest(b) {
+      return b is map
+        && b.keys().hasOnly(['over', 'score', 'par', 'date', 'course'])
+        && b.over is number && b.score is number && b.par is number
+        && b.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && b.course is string && b.course.size() <= 80;
+    }
+
+    function validRecentRound(r) {
+      return r is map
+        && r.keys().hasOnly(['date', 'course', 'score', 'par', 'q'])
+        && r.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && r.course is string && r.course.size() <= 80
+        && r.score is number && r.par is number && r.q is bool;
+    }
+
+    function validRecent(items) {
+      return items is list
+        && items.size() >= 1 && items.size() <= 5
+        && validRecentRound(items[0])
+        && (items.size() < 2 || validRecentRound(items[1]))
+        && (items.size() < 3 || validRecentRound(items[2]))
+        && (items.size() < 4 || validRecentRound(items[3]))
+        && (items.size() < 5 || validRecentRound(items[4]));
+    }
+
+    function validGame(g) {
+      return g is map
+        && g.keys().size() >= 1
+        && g.keys().hasOnly(['holes', 'avgVsPar', 'bestStreak', 'birdies', 'eagles', 'holesInOne',
+                             'dailyStreak', 'dailyBest', 'dailyLast'])
+        && (!('holes' in g) || g.holes is int)
+        && (!('avgVsPar' in g) || g.avgVsPar is number)
+        && (!('bestStreak' in g) || g.bestStreak is int)
+        && (!('birdies' in g) || g.birdies is int)
+        && (!('eagles' in g) || g.eagles is int)
+        && (!('holesInOne' in g) || g.holesInOne is int)
+        && (!('dailyStreak' in g) || g.dailyStreak is int)
+        && (!('dailyBest' in g) || g.dailyBest is int)
+        && (!('dailyLast' in g) || g.dailyLast.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$'));
+    }
+
+    function validShared(d) {
+      return d.keys().hasOnly(['name', 'handicap', 'mode', 'roundsCount', 'qualifyingCount', 'best',
+                               'recent', 'game', 'updatedAt'])
+        && d.keys().hasAll(['name', 'updatedAt'])
+        && validName(d.name)
+        && d.updatedAt == request.time
+        && (('handicap' in d) == ('mode' in d))
+        && (!('handicap' in d) || (d.handicap is number && d.mode in ['overPar', 'differential']))
+        && (('roundsCount' in d) == ('qualifyingCount' in d))
+        && (!('roundsCount' in d) || (d.roundsCount is int && d.qualifyingCount is int))
+        && (!('best' in d) || validBest(d.best))
+        && (!('recent' in d) || validRecent(d.recent))
+        && (!('game' in d) || validGame(d.game));
+    }
+
     // Shared course catalogue.
     // - Anyone signed in can add a course (once: the document id is derived from the name).
     // - Values can be added later only while the course has none; after that they are fixed,
@@ -162,6 +228,7 @@ service cloud.firestore {
     match /users/{uid} {
       allow read: if isOwner(uid);
       allow create, update: if isOwner(uid) && validSettings(request.resource.data);
+      allow delete: if isOwner(uid);
 
       match /rounds/{roundId} {
         allow read, delete: if isOwner(uid);
@@ -169,9 +236,9 @@ service cloud.firestore {
       }
 
       match /game/{docId} {
-        allow read: if isOwner(uid);
-        allow write: if isOwner(uid)
-          && docId in ['lifetime', 'settings', 'profile']
+        allow read, delete: if isOwner(uid);
+        allow create, update: if isOwner(uid)
+          && docId in ['lifetime', 'settings', 'profile', 'privacy']
           && request.resource.data.keys().size() <= 40;
       }
 
@@ -196,6 +263,15 @@ service cloud.firestore {
         && request.resource.data.keys().hasOnly(['uid', 'name'])
         && request.resource.data.uid == request.auth.uid
         && validName(request.resource.data.name);
+      // Deleting your account releases your code.
+      allow delete: if signedIn() && resource.data.uid == request.auth.uid;
+    }
+
+    // What a player shares with friends. See js/profile.js for how it is built.
+    match /sharedStats/{ownerUid} {
+      allow read: if signedIn() && (request.auth.uid == ownerUid || areFriends(ownerUid));
+      allow create, update: if isOwner(ownerUid) && validShared(request.resource.data);
+      allow delete: if isOwner(ownerUid);
     }
 
     // Friend requests and friendships. Only the two people involved can see one.

@@ -5,7 +5,7 @@
 import { GEN_VERSION } from '../constants.js';
 import { dailyHoles } from '../generate.js';
 import { newHoleState, replay, scoreName, isValidInput } from '../rules.js';
-import { h, createPlay, resultCard, formatVsPar } from '../ui.js';
+import { h, createPlay, resultCard, formatVsPar, toneFor } from '../ui.js';
 
 export const DRAFT_VERSION = 1;
 const LEADERBOARD_CAP = 30;
@@ -99,7 +99,6 @@ export function nextStreak(prev, date) {
   return { streak, best: Math.max(p.best || 0, streak), lastDate: date };
 }
 
-const EMOJI = (d) => (d <= -2 ? '\u{1F985}' : d === -1 ? '\u{1F426}' : d === 0 ? '\u{1F7E2}' : d === 1 ? '\u{1F7E1}' : d === 2 ? '\u{1F7E0}' : '\u{1F534}');
 
 // Share text: scores relative to par only. Nothing about the hole layouts,
 // and not even which hole was the par 3, 4 or 5.
@@ -107,11 +106,11 @@ export function shareText(date, pars, strokes, streak) {
   const total = strokes.reduce((a, b) => a + b, 0);
   const par = pars.reduce((a, b) => a + b, 0);
   const lines = [
-    'HANDI Golf Daily ' + date,
+    'Handi Golf Daily ' + date,
     total + ' strokes (' + formatVsPar(total - par) + ')',
-    strokes.map((s, i) => EMOJI(s - pars[i])).join(' '),
+    strokes.map((s, i) => formatVsPar(s - pars[i])).join('  '),
   ];
-  if (streak > 1) lines.push('\u{1F525} ' + streak + ' day streak');
+  if (streak > 1) lines.push(streak + ' day streak');
   return lines.join('\n');
 }
 
@@ -177,7 +176,7 @@ export function createDaily(root, env) {
         return box;
       }
       const body = rows.map((r) => h('tr', { class: (r.isYou ? 'hg-you ' : '') + (r.total == null ? 'hg-idle' : '') },
-        h('td', { text: r.rank == null ? '–' : String(r.rank) }),
+        h('td', { class: 'hg-rank', text: r.rank == null ? '–' : String(r.rank) }),
         h('th', { scope: 'row', text: r.name + (r.isYou && r.name !== 'You' ? ' (you)' : '') }),
         h('td', { text: r.total == null ? 'not played' : String(r.total) }),
         h('td', { text: r.total == null ? '' : String(r.penalties || 0) })));
@@ -238,7 +237,7 @@ export function createDaily(root, env) {
         h('p', { text: 'Three holes, the same for everyone today. One attempt: once a tap locks, it is locked.' }),
         h('div', { class: 'hg-holes' }, holes.map((hole, i) => h('div', null,
           h('span', { class: 'hg-note', text: 'Hole ' + (i + 1) }),
-          h('b', { text: states[i].done ? String(states[i].strokes) : 'Par ' + hole.par }),
+          h('b', { class: states[i].done ? 'hg-tone-' + toneFor(states[i].strokes, hole.par, states[i]) : '', text: states[i].done ? String(states[i].strokes) : 'Par ' + hole.par }),
           h('span', { class: 'hg-note', text: states[i].done ? scoreName(states[i].strokes, hole.par, states[i]) : hole.lengthYds + ' yds' })))),
         started ? h('p', { class: 'hg-note', text: 'Round in progress: you are on hole ' + (idx + 1) + ' of 3.' }) : null,
         go,
@@ -272,12 +271,11 @@ export function createDaily(root, env) {
         states[i] = state;
         updateBar();
         const last = i === 2;
-        const parts = [state.shots.length + (state.shots.length === 1 ? ' shot' : ' shots')];
-        if (state.putts) parts.push(state.putts + (state.putts === 1 ? ' putt' : ' putts'));
-        if (state.penalties) parts.push(state.penalties + (state.penalties === 1 ? ' penalty' : ' penalties'));
         play.showCard(resultCard({
           title: scoreName(state.strokes, holes[i].par, state),
-          lines: ['Hole ' + (i + 1) + ' of 3: ' + state.strokes + ' on a par ' + holes[i].par + ' (' + parts.join(', ') + ')'],
+          tone: toneFor(state.strokes, holes[i].par, state),
+          subtitle: 'Hole ' + (i + 1) + ' of 3  ·  ' + state.strokes + (state.strokes === 1 ? ' stroke' : ' strokes') + ' on a par ' + holes[i].par,
+          tiles: [['Shots', state.shots.length], ['Putts', state.putts], ['Penalties', state.penalties]],
           actions: [{ label: last ? 'See result' : 'Next hole', primary: true, onClick: () => (last ? finish() : playHole(i + 1)) }],
         }));
       },
@@ -328,11 +326,12 @@ export function createDaily(root, env) {
     });
     const view = h('div', { class: 'hg-daily' },
       h('h2', { text: 'Daily · ' + prettyDate(date) }),
-      h('div', { class: 'hg-panel' },
+      h('div', { class: 'hg-panel hg-hero' },
+        h('span', { class: 'hg-hero-k', text: 'Your round' }),
         h('p', { class: 'hg-big', text: result.total + ' strokes (' + formatVsPar(result.total - par) + ')' }),
         h('div', { class: 'hg-holes' }, result.holes.map((x, i) => h('div', null,
           h('span', { class: 'hg-note', text: 'Hole ' + (i + 1) + ' · par ' + pars[i] }),
-          h('b', { text: String(x.strokes) }),
+          h('b', { class: 'hg-tone-' + toneFor(x.strokes, pars[i], { pickedUp: x.strokes >= 12 && states[i] && states[i].pickedUp }), text: String(x.strokes) }),
           h('span', { class: 'hg-note', text: scoreName(x.strokes, pars[i], { pickedUp: x.strokes >= 12 && states[i] && states[i].pickedUp }) })))),
         h('p', null, 'Streak: ', h('strong', { text: streak.streak + (streak.streak === 1 ? ' day' : ' days') }), ' · best ' + streak.best),
         h('p', { class: 'hg-note', text: 'You have played today’s round. Come back after the reset for new holes.' }),

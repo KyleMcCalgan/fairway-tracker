@@ -1,4 +1,4 @@
-// HANDI Golf: every tuning number lives here (docs/game.md, principle 5).
+// Handi Golf: every tuning number lives here (docs/game.md, principle 5).
 // Units are yards, degrees and milliseconds unless a comment says otherwise.
 
 // Part of every seed and every stored daily score. Bump whenever generator

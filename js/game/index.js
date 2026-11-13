@@ -1,4 +1,4 @@
-// HANDI Golf entry point and integration seam (docs/game.md 9).
+// Handi Golf entry point and integration seam (docs/game.md 9).
 //
 //   import { mount } from './js/game/index.js';
 //   const game = mount(container, { mode, storage, daily });
@@ -55,7 +55,7 @@ export function mount(container, options = {}) {
   addTab('endless', 'Endless');
   if (daily) addTab('daily', 'Daily');
   const settingsBtn = h('button', { class: 'hg-btn hg-small', type: 'button', text: 'Settings' });
-  const header = h('header', { class: 'hg-header' }, h('h1', { text: 'HANDI Golf' }), nav, settingsBtn);
+  const header = h('header', { class: 'hg-header' }, h('h1', { text: 'Handi Golf' }), nav, ...(options.headerExtras || []), settingsBtn);
   const body = h('div', { class: 'hg-body' });
   const root = h('div', { class: 'hg-root' }, header, body);
   if (options.theme === 'light') root.classList.add('hg-light');

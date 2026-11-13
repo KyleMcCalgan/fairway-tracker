@@ -3,60 +3,84 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Fairway — Golf handicap tracker</title>
+    <title>Handi</title>
     <link
       rel="icon"
-      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9B%B3%3C/text%3E%3C/svg%3E"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='24' fill='%23d6edcc'/%3E%3Cg fill='none' stroke='%2320533c' stroke-width='7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M30 82V20'/%3E%3Cpath d='M32 22h40L58 36l14 14H32'/%3E%3Cpath d='M20 82h60'/%3E%3C/g%3E%3C/svg%3E"
     />
     <link rel="stylesheet" href="css/styles.css" />
     <link rel="stylesheet" href="game/game.css" />
   </head>
   <body>
     <div class="auth" id="authScreen">
-      <div class="auth-card">
-        <div class="auth-brand"><span class="brandmark">⛳</span> Fairway</div>
-        <p class="auth-sub">Sign in to see your rounds, courses and handicap on any device.</p>
-        <div id="authForms" hidden>
-          <div class="tabbar auth-tabs">
-            <button type="button" class="active" data-auth-mode="signin">Sign in</button>
-            <button type="button" data-auth-mode="signup">Create account</button>
+      <div class="auth-layout">
+        <aside class="auth-hero">
+          <div class="auth-hero-inner">
+            <div class="auth-brand light"><span class="brandmark"><svg viewBox="0 0 16 16" width="60%" height="60%" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 14V2.5"></path><path d="M4.5 3H12L9.6 5.2 12 7.4H4.5"></path><path d="M2.5 14h11"></path></svg></span> Handi</div>
+            <div class="auth-pitch">
+              <h2>Know your number. Then go and beat it.</h2>
+              <p>
+                Log your rounds, watch your handicap move, and settle it with friends over a quick daily hole.
+              </p>
+              <ul class="auth-points">
+                <li><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7"></path></svg> A handicap estimate that updates with every round</li>
+                <li><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7"></path></svg> Course ratings and slope shared across golfers</li>
+                <li><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7"></path></svg> Handi Golf: three new holes to play every day</li>
+              </ul>
+            </div>
+            <figure class="auth-hero-art" id="authArt">
+              <figcaption><strong>Today on Handi Golf</strong>A procedurally generated hole, the same for every player.</figcaption>
+            </figure>
           </div>
-          <form class="auth-form" id="authForm">
-            <div class="formfield">
-              <label for="authEmail">Email</label><input id="authEmail" type="email" autocomplete="email" required />
+        </aside>
+        <main class="auth-main">
+          <div class="auth-card">
+            <div class="auth-brand compact"><span class="brandmark"><svg viewBox="0 0 16 16" width="60%" height="60%" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 14V2.5"></path><path d="M4.5 3H12L9.6 5.2 12 7.4H4.5"></path><path d="M2.5 14h11"></path></svg></span> Handi</div>
+            <div id="authForms" hidden>
+              <h1 class="auth-title" id="authTitle">Welcome back</h1>
+              <p class="auth-sub" id="authSub">Sign in to see your rounds, courses and handicap on any device.</p>
+              <div class="tabbar auth-tabs" role="group" aria-label="Sign in or create an account">
+                <button type="button" class="active" data-auth-mode="signin" aria-pressed="true">Sign in</button>
+                <button type="button" data-auth-mode="signup" aria-pressed="false">Create account</button>
+              </div>
+              <button class="btn wide auth-google" type="button" id="authGoogle">
+                <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5a5.6 5.6 0 0 1-2.4 3.7v3h3.9c2.3-2.1 3.5-5.2 3.5-8.9z"/><path fill="#34A853" d="M12 24c3.2 0 6-1.1 7.9-2.9l-3.9-3c-1.1.7-2.5 1.2-4 1.2-3.1 0-5.7-2.1-6.6-4.9H1.4v3.1A12 12 0 0 0 12 24z"/><path fill="#FBBC05" d="M5.4 14.4a7.2 7.2 0 0 1 0-4.8V6.5H1.4a12 12 0 0 0 0 10.9l4-3z"/><path fill="#EA4335" d="M12 4.8c1.8 0 3.3.6 4.6 1.8l3.4-3.4A12 12 0 0 0 1.4 6.5l4 3.1C6.3 6.9 8.9 4.8 12 4.8z"/></svg>
+                Continue with Google
+              </button>
+              <div class="auth-divider">or use your email</div>
+              <form class="auth-form" id="authForm" novalidate>
+                <div class="auth-field">
+                  <label for="authEmail">Email</label>
+                  <input id="authEmail" type="email" autocomplete="email" inputmode="email" autocapitalize="off" spellcheck="false" placeholder="you@example.com" required aria-describedby="authEmailError" />
+                  <div class="auth-field-error" id="authEmailError" role="alert"></div>
+                </div>
+                <div class="auth-field">
+                  <label for="authPassword">Password</label>
+                  <div class="auth-password">
+                    <input id="authPassword" type="password" autocomplete="current-password" minlength="6" required aria-describedby="authPasswordHint authPasswordError" />
+                    <button class="auth-peek" type="button" id="authPeek" aria-controls="authPassword" aria-pressed="false">Show</button>
+                  </div>
+                  <div class="auth-field-hint" id="authPasswordHint" hidden>Use at least 6 characters.</div>
+                  <div class="auth-field-error" id="authPasswordError" role="alert"></div>
+                </div>
+                <div class="auth-error" id="authError" role="alert"></div>
+                <button class="btn primary wide auth-submit" type="submit" id="authSubmit"><span class="spinner" aria-hidden="true"></span><span id="authSubmitText">Sign in</span></button>
+                <button class="link-btn auth-forgot" type="button" id="authForgot">Forgot your password?</button>
+              </form>
             </div>
-            <div class="formfield">
-              <label for="authPassword">Password</label
-              ><input id="authPassword" type="password" autocomplete="current-password" minlength="6" required />
+            <div id="authStatus" hidden>
+              <div class="auth-status-row"><span class="spinner dark" id="authSpinner" aria-hidden="true"></span><p class="auth-message" id="authMessage" role="status"></p></div>
+              <button class="btn" type="button" id="authSignOut" hidden>Sign out</button>
             </div>
-            <div class="auth-error" id="authError" role="alert"></div>
-            <button class="btn primary wide" type="submit" id="authSubmit">Sign in</button>
-            <button class="link-btn" type="button" id="authForgot">Forgot password?</button>
-          </form>
-          <div class="auth-divider">or</div>
-          <button class="btn wide" type="button" id="authGoogle">Continue with Google</button>
-        </div>
-        <div id="authStatus" hidden>
-          <p class="auth-message" id="authMessage"></p>
-          <button class="btn" type="button" id="authSignOut" hidden>Sign out</button>
-        </div>
+          </div>
+        </main>
       </div>
     </div>
     <div class="shell" hidden>
       <aside class="sidebar" id="sidebar">
         <div class="brand-row">
           <div class="brand">
-            <span class="brandmark">⛳</span> Fairway<span
-              style="
-                font-size: 10px;
-                opacity: 0.6;
-                font-weight: 600;
-                letter-spacing: 0;
-                align-self: flex-end;
-                margin-bottom: 3px;
-              "
-              >TRACKER</span
-            >
+            <span class="brandmark"><svg viewBox="0 0 16 16" width="60%" height="60%" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 14V2.5"></path><path d="M4.5 3H12L9.6 5.2 12 7.4H4.5"></path><path d="M2.5 14h11"></path></svg></span> Handi
           </div>
           <button
             class="menu-toggle"
@@ -71,9 +95,9 @@
         </div>
         <div class="sidebar-menu" id="sidebarMenu">
           <div class="nav-group">
-            <small>WORKSPACE</small><button class="nav active" data-view="dashboard">◫ &nbsp; Overview</button
-            ><button class="nav" data-view="rounds">▤ &nbsp; All rounds</button
-            ><button class="nav" data-view="forecast">◷ &nbsp; Handicap forecast</button
+            <small>WORKSPACE</small><button class="nav active" data-view="dashboard"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="2.5" width="4.5" height="5" rx="1"></rect><rect x="9" y="2.5" width="4.5" height="3" rx="1"></rect><rect x="9" y="7.5" width="4.5" height="6" rx="1"></rect><rect x="2.5" y="9.5" width="4.5" height="4" rx="1"></rect></svg></span>Overview</button
+            ><button class="nav" data-view="rounds"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h10M3 8h10M3 12h6"></path></svg></span>All rounds</button
+            ><button class="nav" data-view="forecast"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6"></circle><path d="M8 4.5V8l2.4 1.6"></path></svg></span>Handicap forecast</button
             ><button class="nav" data-view="courses">
               <span class="nav-icon" aria-hidden="true"
                 ><svg
@@ -88,8 +112,9 @@
                   <path d="M3.5 3H12L9.5 5.1 12 7.2H3.5"></path>
                   <path d="M2 14h12"></path></svg></span
               >Courses</button
-            ><button class="nav" data-view="insights">▥ &nbsp; Statistics</button
-            ><button class="nav" data-view="play">⛳ &nbsp; Play</button>
+            ><button class="nav" data-view="insights"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13V8.5M8 13V3.5M13 13V6.5"></path></svg></span>Statistics</button
+            ><button class="nav" data-view="play"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14V2.5"></path><path d="M4.5 3H12L9.6 5.2 12 7.4H4.5"></path><path d="M2.5 14h11"></path></svg></span>Play</button
+            ><button class="nav" data-view="friends"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="2.5"></circle><path d="M1.8 13c.4-2.4 2.2-3.7 4.2-3.7s3.8 1.3 4.2 3.7"></path><circle cx="11.4" cy="5.2" r="1.9"></circle><path d="M11.6 9c1.6.1 3 1.2 3.3 3.2"></path></svg></span>Friends<span class="nav-badge" id="friendsNavBadge" hidden></span></button>
           </div>
           <div class="nav-group">
             <small>GUIDE</small
@@ -110,9 +135,9 @@
             </button>
           </div>
           <div class="nav-bottom">
-            <small>YOUR DATA</small><button class="nav" id="exportNav" type="button">Export backup</button
-            ><button class="nav" id="importNav" type="button">Import backup</button
-            ><button class="nav" id="signOutNav" type="button">Sign out</button>
+            <small>ACCOUNT</small
+            ><button class="nav" data-view="settings"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 5h6M11.5 5h2M2.5 11h2M7.5 11h6"></path><circle cx="10" cy="5" r="1.5"></circle><circle cx="6" cy="11" r="1.5"></circle></svg></span>Settings</button
+            ><button class="nav" id="signOutNav" type="button"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 3H4a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h2.5M10 5.5L12.5 8 10 10.5M12.5 8H6.5"></path></svg></span>Sign out</button>
             <div class="save-hint" id="accountStatus" role="status" aria-live="polite"></div>
           </div>
         </div>
@@ -126,8 +151,8 @@
             <div class="sub" id="pageSubtitle">Track every round. Understand every stroke.</div>
           </div>
           <div class="actions">
-            <button class="btn" id="estimateTop">↗ &nbsp; Score estimator</button
-            ><button class="btn primary" id="addTop">＋ &nbsp; Add round</button>
+            <button class="btn" id="estimateTop">Score estimator</button
+            ><button class="btn primary" id="addTop">Add round</button>
           </div>
         </div>
         <div id="dataSourceNotice" class="note" role="status" style="margin: 0 0 18px" hidden></div>
@@ -414,6 +439,110 @@
               <div id="courseBars"></div>
             </div>
           </div>
+          <div class="section-label stats-heading">Form and consistency</div>
+          <div class="grid">
+            <div class="panel">
+              <div class="panel-head">
+                <div>
+                  <h2>Scoring summary</h2>
+                  <p>Average, median, best and worst across your qualifying rounds, and how steady you are from round to round.</p>
+                </div>
+              </div>
+              <div class="stats-auto" id="xSummary"></div>
+            </div>
+            <div class="panel">
+              <div class="panel-head">
+                <div>
+                  <h2>Recent form</h2>
+                  <p>A rolling average of your last few rounds. A line that is falling means you are improving.</p>
+                </div>
+                <div class="tabbar" id="xRollTabs" role="group" aria-label="Rolling average window">
+                  <button type="button" data-roll="5" class="active" aria-pressed="true">5</button>
+                  <button type="button" data-roll="10" aria-pressed="false">10</button>
+                  <button type="button" data-roll="20" aria-pressed="false">20</button>
+                </div>
+              </div>
+              <div class="chart" id="xRollChart"></div>
+              <div class="chart-note" id="xRollNote" aria-live="polite"></div>
+            </div>
+          </div>
+
+          <div class="section-label stats-heading">Your handicap over time</div>
+          <div class="grid">
+            <div class="panel">
+              <div class="panel-head">
+                <div>
+                  <h2>Handicap history</h2>
+                  <p>Where your estimate is now, your best and worst, and how long since you were at your best.</p>
+                </div>
+              </div>
+              <div class="stats-auto" id="xHandicap"></div>
+              <div class="section-label" style="margin-top: 22px">New personal bests</div>
+              <div id="xBests"></div>
+            </div>
+            <div class="panel">
+              <div class="panel-head">
+                <div>
+                  <h2>Against your handicap</h2>
+                  <p>How often a round beats the handicap you held going into it, and your streaks of doing it.</p>
+                </div>
+              </div>
+              <div class="stats-auto" id="xBeat"></div>
+            </div>
+          </div>
+
+          <div class="section-label stats-heading">Where and when you play best</div>
+          <div class="grid">
+            <div class="panel">
+              <div class="panel-head">
+                <div>
+                  <h2>Best and toughest courses</h2>
+                  <p>Your lowest and highest average scores, among courses you have played at least twice.</p>
+                </div>
+              </div>
+              <div id="xCourses"></div>
+            </div>
+            <div class="panel">
+              <div class="panel-head">
+                <div>
+                  <h2>By day of the week</h2>
+                  <p>Average score for each day. The bar shows how many rounds are behind it; green marks your best average.</p>
+                </div>
+              </div>
+              <div id="xWeekday"></div>
+            </div>
+          </div>
+          <div class="grid">
+            <div class="panel">
+              <div class="panel-head">
+                <div>
+                  <h2>By month of the year</h2>
+                  <p>Average score for each calendar month across all years. The bar shows how many rounds are behind it.</p>
+                </div>
+              </div>
+              <div id="xMonth"></div>
+            </div>
+            <div class="panel">
+              <div class="panel-head">
+                <div>
+                  <h2>Rounds per month</h2>
+                  <p>How often you have played over the last twelve months, including rounds that do not count.</p>
+                </div>
+              </div>
+              <div class="chart" id="xMonthly"></div>
+            </div>
+          </div>
+
+          <div class="section-label stats-heading">Activity</div>
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>How often you play</h2>
+                <p>Recent activity, your average pace, and how your counted and non-counted rounds compare.</p>
+              </div>
+            </div>
+            <div class="stats-auto" id="xActivity"></div>
+          </div>
         </section>
         <section id="courses" class="view">
           <div class="panel course-rating-panel">
@@ -425,27 +554,146 @@
                   account only. If you play several tee sets at one venue, add each one as its own course.
                 </p>
               </div>
-              <button class="btn primary small" id="addCourseBtn" type="button">＋ Add course</button>
+              <button class="btn primary small" id="addCourseBtn" type="button">Add course</button>
             </div>
             <div id="courseRatingTable" class="tablewrap"></div>
           </div>
         </section>
         <section id="play" class="view">
-          <div class="play-toolbar">
-            <button class="btn small" id="friendsBtn" type="button">
-              Friends <span class="pill warn" id="friendsBadge" hidden></span>
-            </button>
-            <span class="hint">HANDI Golf: a quick minigame. Daily is the same three holes for everyone, once a day.</span>
-          </div>
           <div id="gameHost" class="game-host"></div>
+        </section>
+        <section id="friends" class="view">
+          <div id="friendsPage"></div>
+        </section>
+        <section id="settings" class="view">
+          <div class="settings">
+            <div class="panel">
+              <div class="panel-head">
+                <div>
+                  <h2>Profile</h2>
+                  <p>How you appear to friends and on the Daily leaderboard.</p>
+                </div>
+              </div>
+              <form id="nameForm" class="set-block" novalidate>
+                <label for="setName">Display name</label>
+                <div class="set-inline">
+                  <input id="setName" type="text" maxlength="24" autocomplete="nickname" aria-describedby="nameMsg" />
+                  <button class="btn primary" type="submit" id="nameSave">Save</button>
+                </div>
+                <div class="set-msg" id="nameMsg" role="status" aria-live="polite"></div>
+              </form>
+              <div class="set-block">
+                <label id="codeLabel">Your friend code</label>
+                <div class="set-inline">
+                  <output class="friend-code" id="setCode" aria-labelledby="codeLabel">…</output>
+                  <button class="btn" type="button" id="copyCode">Copy</button>
+                </div>
+                <div class="hint">Share it so people can send you a friend request. Nothing is shared until you accept.</div>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-head">
+                <div>
+                  <h2>What friends can see</h2>
+                  <p>Only accepted friends see this. Switch something off and it stops being shared within seconds.</p>
+                </div>
+              </div>
+              <div class="privacy-list" id="privacyList"></div>
+              <div class="set-note">
+                Never shared with anyone: your round notes, your course ratings and slopes, and your email address.
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-head">
+                <div>
+                  <h2>Your data</h2>
+                  <p>Download a backup of your rounds and settings, or restore from one.</p>
+                </div>
+              </div>
+              <div class="set-actions">
+                <button class="btn" type="button" id="exportBtn">Export backup</button>
+                <button class="btn" type="button" id="importBtn">Import backup…</button>
+                <input type="file" id="importFile" accept=".json,application/json" hidden />
+              </div>
+              <div class="import-preview" id="importPreview" hidden></div>
+              <div class="set-msg" id="dataMsg" role="status" aria-live="polite"></div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-head">
+                <div>
+                  <h2>Account</h2>
+                  <p id="accountLine">Signed in.</p>
+                </div>
+              </div>
+              <form id="pwForm" class="set-block" novalidate hidden>
+                <h3 class="set-sub">Change password</h3>
+                <div class="set-fields">
+                  <div class="formfield">
+                    <label for="pwCurrent">Current password</label>
+                    <input id="pwCurrent" type="password" autocomplete="current-password" />
+                  </div>
+                  <div class="formfield">
+                    <label for="pwNew">New password</label>
+                    <input id="pwNew" type="password" autocomplete="new-password" minlength="6" />
+                  </div>
+                  <div class="formfield">
+                    <label for="pwConfirm">Confirm new password</label>
+                    <input id="pwConfirm" type="password" autocomplete="new-password" minlength="6" />
+                  </div>
+                </div>
+                <div class="set-inline">
+                  <button class="btn primary" type="submit" id="pwSave">Update password</button>
+                </div>
+                <div class="set-msg" id="pwMsg" role="status" aria-live="polite"></div>
+              </form>
+              <div class="set-block" id="googleNote" hidden>
+                <div class="hint">You sign in with Google, so your password is managed by your Google account.</div>
+              </div>
+              <div class="set-actions">
+                <button class="btn" type="button" id="settingsSignOut">Sign out</button>
+              </div>
+            </div>
+
+            <div class="panel danger-zone">
+              <div class="panel-head">
+                <div>
+                  <h2>Delete account</h2>
+                  <p>
+                    Permanently deletes your rounds, course list, settings, profile, friendships and Handi Golf stats.
+                    This cannot be undone. Courses you added to the shared catalogue stay, because other golfers' rounds
+                    use them.
+                  </p>
+                </div>
+              </div>
+              <form id="deleteForm" class="set-block" novalidate>
+                <div class="set-fields">
+                  <div class="formfield">
+                    <label for="deleteConfirm">Type <strong>DELETE</strong> to confirm</label>
+                    <input id="deleteConfirm" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" />
+                  </div>
+                  <div class="formfield" id="deletePwField">
+                    <label for="deletePassword">Your password</label>
+                    <input id="deletePassword" type="password" autocomplete="current-password" />
+                  </div>
+                </div>
+                <div class="set-inline">
+                  <button class="btn danger" type="submit" id="deleteBtn" disabled>Delete my account</button>
+                </div>
+                <div class="set-msg error" id="deleteMsg" role="alert"></div>
+              </form>
+            </div>
+          </div>
         </section>
         <section id="guide" class="view">
           <div class="guide-hero">
             <div class="panel guide-panel guide-intro">
-              <div class="eyebrow">Fairway guide</div>
+
               <h2>How the app turns rounds into an estimate</h2>
               <p>
-                Fairway keeps your round history, compares scores using the method you choose, and shows which recent
+                Handi keeps your round history, compares scores using the method you choose, and shows which recent
                 results contribute to your estimate. It is a personal tracking tool; an official Handicap Index is
                 maintained through an authorized golf association or club.
               </p>
@@ -763,15 +1011,6 @@
         </form>
       </div>
     </div>
-    <div class="modal-backdrop" id="friendsOverlay">
-      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="friendsTitle">
-        <div class="modal-header">
-          <h2 id="friendsTitle">Friends</h2>
-          <button class="iconbtn" data-close="friendsOverlay" aria-label="Close">×</button>
-        </div>
-        <div id="friendsBody" class="friends-body"></div>
-      </div>
-    </div>
     <div class="modal-backdrop" id="courseOverlay">
       <div class="modal" role="dialog" aria-modal="true" aria-labelledby="courseTitle">
         <div class="modal-header">
@@ -860,7 +1099,6 @@
         </div>
       </div>
     </div>
-    <input type="file" id="importFile" accept=".json,application/json" hidden />
     <div id="toast" class="toast" role="status"></div>
     <script type="module" src="js/app.js"></script>
   </body>

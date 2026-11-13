@@ -1,9 +1,10 @@
-// Firestore-backed adapters for HANDI Golf (docs/game.md, "Integration seam").
+// Firestore-backed adapters for Handi Golf (docs/game.md, "Integration seam").
 //
 // The game itself never imports Firebase; this module is the host's side of the
 // seam. It also holds the friends logic used by the Play view's Friends dialog.
 //
-//   users/{uid}/game/{lifetime|settings|profile}   private to the player
+//   users/{uid}/game/{lifetime|settings|profile|privacy}   private to the player
+//   sharedStats/{uid}                              what the player shows friends (js/profile.js)
 //   friendCodes/{code}                             { uid, name }; read by exact code only
 //   friendships/{uidA_uidB}                        { users, requestedBy, status, names }
 //   dailyScores/{date_uid}                         one result per player per day, create-only
@@ -13,6 +14,7 @@
 // it changes after every shot, and Daily is an honour-system game anyway.
 
 import { getDb } from './firebase.js';
+import { normalizePrivacy } from './profile.js';
 import {
   doc,
   getDoc,
@@ -263,8 +265,11 @@ export function createGameBackend(user) {
     if (!found.exists()) throw new Error('No player has that code. Check it and try again.');
     const other = found.data();
     const id = pairId(uid, other.uid);
-    const existing = await getDoc(doc(db, 'friendships', id));
-    if (existing.exists()) {
+    // A direct read of a missing friendship is denied by the rules because it
+    // has no users field. Query our own friendships instead.
+    const matches = await getDocs(query(collection(db, 'friendships'), where('users', 'array-contains', uid)));
+    const existing = matches.docs.find((d) => d.id === id);
+    if (existing) {
       const f = existing.data();
       throw new Error(
         f.status === 'accepted' ? other.name + ' is already your friend.'
@@ -285,5 +290,40 @@ export function createGameBackend(user) {
   const accept = (id) => updateDoc(doc(db, 'friendships', id), { status: 'accepted' });
   const remove = (id) => deleteDoc(doc(db, 'friendships', id));
 
-  return { uid, storage, daily, profile, setName, watchFriends, addByCode, accept, remove };
+  /* ------------------------------------------------- sharing with friends */
+
+  const sharedRef = (who) => doc(db, 'sharedStats', who);
+
+  // What this player lets friends see (js/profile.js). Everything is on until switched off.
+  async function loadPrivacy() {
+    const s = await getDoc(gameDoc('privacy'));
+    return normalizePrivacy(s.exists() ? s.data() : null);
+  }
+  const savePrivacy = (privacy) => setDoc(gameDoc('privacy'), normalizePrivacy(privacy));
+
+  // Replaces the whole summary: anything not in `summary` stops being visible to friends.
+  const publishShared = (summary) =>
+    setDoc(sharedRef(uid), { ...plain(summary), updatedAt: serverTimestamp() });
+
+  // A friend's summary, or null if they have not published one (or you may not read it).
+  async function fetchShared(friendUid) {
+    try {
+      const s = await getDoc(sharedRef(friendUid));
+      if (!s.exists()) return null;
+      const d = s.data();
+      return { ...d, updatedAtMs: d.updatedAt && d.updatedAt.toMillis ? d.updatedAt.toMillis() : null };
+    } catch (e) {
+      console.warn('could not read a friend profile', e);
+      return null;
+    }
+  }
+
+  // Lifetime Handi Golf stats; fires again whenever the game saves them.
+  const watchLifetime = (callback, onError) =>
+    onSnapshot(gameDoc('lifetime'), (s) => callback(s.exists() ? s.data() : null), onError);
+
+  return {
+    uid, storage, daily, profile, setName, watchFriends, addByCode, accept, remove,
+    loadPrivacy, savePrivacy, publishShared, fetchShared, watchLifetime,
+  };
 }

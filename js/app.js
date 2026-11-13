@@ -1,5 +1,10 @@
 import * as fb from './firebase.js';
 import { showPlay, hidePlay, resetPlay } from './play.js';
+import { initAuth, showAuth, showApp } from './auth-ui.js';
+import { startSocial, stopSocial, subscribeFriends, updateRounds, pausePublishing, resumePublishing } from './social.js';
+import { initFriends, setFriends, showFriends, resetFriends } from './friends.js';
+import { initSettings, renderSettings, resetSettings } from './settings.js';
+import { renderExtraStats, initInsights } from './insights.js';
 
 let lastInfoTrigger = null;
 let rounds = []; // derived: this user's rounds, with the course name filled in
@@ -16,6 +21,7 @@ let modeUiInitialized = null; // the mode the estimator inputs were last set up 
 
 // Live Firestore data (the data model is described in firebase.js)
 let session = null; // { uid, email, user, stop }
+let stopFriendsWatch = null;
 let sessionReady = false;
 let catalogue = new Map(); // courseId -> { id, name, rating?, slope? }  shared by every user
 let myCourses = new Map(); // courseId -> { rating?, slope? }  this user's list + personal values
@@ -156,6 +162,7 @@ function rebuild() {
 function onDataChange() {
   if (!session || !loaded.settings || !loaded.rounds || !loaded.mine || !loaded.courses) return;
   rebuild();
+  publishToFriends();
   if (!sessionReady) {
     sessionReady = true;
     switchView('dashboard');
@@ -163,11 +170,30 @@ function onDataChange() {
   }
   renderAll();
 }
+// What friends can see is built from these rounds and your handicap (js/social.js and js/profile.js).
+function publishToFriends() {
+  if (!session) return;
+  updateRounds({
+    rounds,
+    handicap: calc(eligible()).handicap,
+    mode: settings.useCourseRatings ? 'differential' : 'overPar',
+  });
+}
+function updateFriendsBadge(list) {
+  const waiting = list.filter((f) => f.status === 'incoming').length;
+  $('friendsNavBadge').hidden = waiting === 0;
+  $('friendsNavBadge').textContent = String(waiting);
+}
 function startSession(user) {
   if (session?.uid === user.uid) return;
   stopSession();
   session = { uid: user.uid, email: user.email || user.displayName || 'your account', user, stop: null };
   showAuth('loading');
+  startSocial(user);
+  stopFriendsWatch = subscribeFriends((list) => {
+    setFriends(list);
+    updateFriendsBadge(list);
+  });
   session.stop = fb.watchUserData(user.uid, {
     settings: (data) => {
       settings = normalizeSettings(data);
@@ -199,6 +225,11 @@ function startSession(user) {
 }
 function stopSession() {
   resetPlay();
+  stopFriendsWatch?.();
+  stopFriendsWatch = null;
+  stopSocial();
+  resetFriends();
+  resetSettings();
   session?.stop?.();
   session = null;
   sessionReady = false;
@@ -233,7 +264,7 @@ function currentBackup() {
     if (profile) ratings[courseKey(c.name)] = { rating: profile.rating, slope: profile.slope };
   });
   return {
-    format: 'fairway-golf-backup',
+    format: 'handi-backup',
     version: 2,
     rounds: rounds.map(({ id, date, course, score, par, qualifying, notes }) => ({
       id,
@@ -534,6 +565,8 @@ function metric(k, v, foot, featured = false) {
 }
 function setupPanelInfo() {
   document.querySelectorAll('.panel').forEach((panel) => {
+    // Settings keeps its descriptions on the page: they explain what is shared and what is deleted.
+    if (panel.closest('#settings')) return;
     let head = panel.querySelector(':scope > .panel-head');
     if (!head || head.querySelector('[data-info]')) return;
     let title = head.querySelector('h2')?.textContent.trim() || 'More information',
@@ -773,7 +806,7 @@ function lineChart(el, entries, { values, label, color = '#2f8056', minZero = fa
     });
   }
 }
-function barChart(id, labels, vals, { onSelect = null } = {}) {
+function barChart(id, labels, vals, { onSelect = null, ariaLabel = 'Score distribution', unit = 'rounds' } = {}) {
   let el = $(id);
   if (!vals.length) {
     el.innerHTML = '<div class="empty">No data yet</div>';
@@ -791,10 +824,10 @@ function barChart(id, labels, vals, { onSelect = null } = {}) {
     .map((v, i) => {
       let barHeight = Math.max((v / max) * plotHeight, 3),
         barY = bottom - barHeight;
-      return `<rect class="${interactive ? 'dist-bar' : ''}" x="${p.l + i * bw + bw * 0.15}" y="${barY}" width="${bw * 0.7}" height="${barHeight}" rx="4" fill="#428761" ${interactive ? `data-bar-index="${i}" tabindex="0" role="button" aria-pressed="false" aria-label="${escapeHTML(labels[i])}: ${v} rounds. Click to inspect."` : ''}><title>${escapeHTML(labels[i])}: ${v} rounds</title></rect><text class="dist-axis" x="${p.l + (i + 0.5) * bw}" y="${h - 9}" text-anchor="middle">${escapeHTML(labels[i])}</text><text class="dist-axis" x="${p.l + (i + 0.5) * bw}" y="${barY - 5}" text-anchor="middle">${v || ''}</text>`;
+      return `<rect class="${interactive ? 'dist-bar' : ''}" x="${p.l + i * bw + bw * 0.15}" y="${barY}" width="${bw * 0.7}" height="${barHeight}" rx="4" fill="#428761" ${interactive ? `data-bar-index="${i}" tabindex="0" role="button" aria-pressed="false" aria-label="${escapeHTML(labels[i])}: ${v} ${unit}. Click to inspect."` : ''}><title>${escapeHTML(labels[i])}: ${v} ${unit}</title></rect><text class="dist-axis" x="${p.l + (i + 0.5) * bw}" y="${h - 9}" text-anchor="middle">${escapeHTML(labels[i])}</text><text class="dist-axis" x="${p.l + (i + 0.5) * bw}" y="${barY - 5}" text-anchor="middle">${v || ''}</text>`;
     })
     .join('');
-  el.innerHTML = `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" role="${interactive ? 'group' : 'img'}" aria-label="Score distribution">${bars}</svg>`;
+  el.innerHTML = `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" role="${interactive ? 'group' : 'img'}" aria-label="${escapeHTML(ariaLabel)}">${bars}</svg>`;
   if (interactive) {
     let bars = [...el.querySelectorAll('.dist-bar')],
       select = (bar) => {
@@ -1296,6 +1329,20 @@ function renderInsights() {
         `<div class="barrow"><div title="${escapeHTML(name)}" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:650">${escapeHTML(name)}</div><div class="bar"><b style="width:${(n / max) * 100}%"></b></div><div class="num">${n}</div></div>`,
     )
     .join('');
+  // Extra statistics (js/insights.js): the handicap after each qualifying round, and going into each one.
+  renderExtraStats({
+    all: l,
+    qualifying: e,
+    valueOf: handicapValue,
+    label: handicapValueLabel(),
+    series: e.map((r, i) => ({ date: r.date, val: calc(e.slice(0, i + 1)).handicap })).filter((x) => Number.isFinite(x.val)),
+    before: e.map((_, i) => (i < 1 ? null : calc(e.slice(0, i)).handicap)),
+    lineChart,
+    barChart,
+    esc: escapeHTML,
+    dateShort,
+    today: new Date().toLocaleDateString('en-CA'),
+  });
 }
 function renderAll() {
   syncModeUI();
@@ -1324,11 +1371,16 @@ function switchView(v) {
       'Find or add the courses you play and set the rating and slope used for your handicap.',
     ],
     insights: ['Golf by the numbers', 'Patterns and performance trends.'],
-    play: ['HANDI Golf', 'A quick minigame: Endless practice, or the Daily round with your friends.'],
+    play: ['Handi Golf', 'A quick minigame: Endless practice, or the Daily round with your friends.'],
+    friends: ['Friends', 'Add friends, accept requests and see how everyone is playing.'],
+    settings: ['Settings', 'Your profile, what friends can see, your data and your account.'],
     guide: ['How this app works', 'A guide to the estimate, course ratings, slope, and your score window.'],
   };
-  if (v === 'play' && session) showPlay(session.user);
+  document.body.classList.toggle('on-play', v === 'play');
+  if (v === 'play' && session) showPlay(session.user, { openFriends: () => switchView('friends') });
   else hidePlay();
+  if (v === 'friends' && session) showFriends();
+  if (v === 'settings') renderSettings();
   $('pageTitle').textContent = titles[v][0];
   $('pageSubtitle').textContent = titles[v][1];
   window.scrollTo({ top: 0, behavior: 'instant' });
@@ -1494,7 +1546,7 @@ function exportJSON() {
     url = URL.createObjectURL(blob),
     a = document.createElement('a');
   a.href = url;
-  a.download = 'fairway-golf-backup-' + new Date().toISOString().slice(0, 10) + '.json';
+  a.download = 'handi-backup-' + new Date().toISOString().slice(0, 10) + '.json';
   document.body.appendChild(a);
   a.click();
   a.remove();
@@ -1618,115 +1670,54 @@ $('courseForm').addEventListener('submit', (evt) => {
 $('addCourseBtn').onclick = () => openCourseModal();
 $('newCourseBtn').onclick = () => openCourseModal({ name: $('course').value, fromRound: true });
 
-// ---- Sign-in screen --------------------------------------------------------------
-let authMode = 'signin';
-function setAuthError(message, ok = false) {
-  $('authError').textContent = message;
-  $('authError').classList.toggle('ok', ok);
-}
-function setAuthMode(mode) {
-  authMode = mode;
-  document
-    .querySelectorAll('[data-auth-mode]')
-    .forEach((b) => b.classList.toggle('active', b.dataset.authMode === mode));
-  $('authSubmit').textContent = mode === 'signin' ? 'Sign in' : 'Create account';
-  $('authPassword').autocomplete = mode === 'signin' ? 'current-password' : 'new-password';
-  $('authForgot').hidden = mode !== 'signin';
-  setAuthError('');
-}
-// state: 'setup' (Firebase config missing) | 'loading' | 'error' | 'signedOut'
-function showAuth(state, message = '') {
-  $('authScreen').hidden = false;
-  document.querySelector('.shell').hidden = true;
-  $('authForms').hidden = state !== 'signedOut';
-  $('authStatus').hidden = state === 'signedOut';
-  $('authSignOut').hidden = state !== 'error';
-  $('authMessage').textContent =
-    state === 'setup'
-      ? 'Firebase is not configured yet. Open js/firebase-config.js, paste in your Firebase web-app config and reload. The README has the full steps.'
-      : state === 'loading'
-        ? 'Loading…'
-        : message;
-  if (state === 'signedOut') $('authPassword').value = '';
-}
-function showApp() {
-  $('authScreen').hidden = true;
-  document.querySelector('.shell').hidden = false;
-}
-async function runAuth(action) {
-  $('authSubmit').disabled = $('authGoogle').disabled = true;
-  setAuthError('');
-  try {
-    await action();
-  } catch (error) {
-    setAuthError(fb.describeError(error));
-  } finally {
-    $('authSubmit').disabled = $('authGoogle').disabled = false;
-  }
-}
-document
-  .querySelectorAll('[data-auth-mode]')
-  .forEach((b) => (b.onclick = () => setAuthMode(b.dataset.authMode)));
-$('authForm').addEventListener('submit', (evt) => {
-  evt.preventDefault();
-  const email = $('authEmail').value.trim();
-  const password = $('authPassword').value;
-  runAuth(() =>
-    authMode === 'signin' ? fb.signInWithEmail(email, password) : fb.createAccount(email, password),
-  );
-});
-$('authGoogle').onclick = () => runAuth(() => fb.signInWithGoogle());
-$('authForgot').onclick = () => {
-  const email = $('authEmail').value.trim();
-  if (!email) {
-    setAuthError('Enter your email above first, then choose “Forgot password?”.');
-    return;
-  }
-  runAuth(async () => {
-    await fb.sendReset(email);
-    setAuthError('Password reset email sent. Check your inbox, and your spam folder.', true);
-  });
-};
-$('authSignOut').onclick = () => fb.logOut();
 $('signOutNav').onclick = () => {
   setMobileMenu(false);
   fb.logOut();
 };
 
-// ---- Backup export / import ----------------------------------------------------------
-$('exportNav').onclick = () => {
-  setMobileMenu(false);
-  exportJSON();
-};
-$('importNav').onclick = () => {
-  setMobileMenu(false);
-  $('importFile').click();
-};
-$('importFile').onchange = async (evt) => {
-  const file = evt.target.files[0];
-  if (!file) return;
-  try {
-    const plan = buildImportPlan(validateBackup(JSON.parse(await file.text())));
-    if (!plan.rounds.length) throw Error('No rounds with a course name were found in that file.');
-    const skipped = plan.skipped
-      ? `\n\n${plan.skipped} rounds without a usable course name will be skipped.`
-      : '';
-    const message = `Import ${plan.rounds.length} rounds across ${plan.myCourses.length} courses into your account?\n\nRounds with the same ID are overwritten; nothing else of yours is deleted. Courses already in the shared catalogue are reused.${skipped}`;
-    if (!confirm(message)) return;
-    showToast('Importing…');
-    await fb.importPlan(session.uid, plan);
-    showToast('Backup imported');
-  } catch (err) {
-    alert('Could not import: ' + fb.describeError(err));
-  } finally {
-    evt.target.value = '';
-  }
-};
+// ---- Backup import (the Settings page drives the screens; see js/settings.js) ---------
+// Reads a backup file and works out what importing it would do, without changing anything.
+// `commit()` then performs the import.
+async function prepareImport(file) {
+  const plan = buildImportPlan(validateBackup(JSON.parse(await file.text())));
+  if (!plan.rounds.length) throw Error('No rounds with a course name were found in that file.');
+  const have = new Set(rawRounds.map((r) => r.id));
+  const overwritten = plan.rounds.filter((r) => have.has(r.id)).length;
+  return {
+    file: file.name,
+    summary: {
+      rounds: plan.rounds.length,
+      newRounds: plan.rounds.length - overwritten,
+      overwritten,
+      courses: plan.myCourses.length,
+      newCourses: plan.newCourses.length,
+      skipped: plan.skipped,
+    },
+    commit: () => fb.importPlan(session.uid, plan),
+  };
+}
 
 // ---- Start ---------------------------------------------------------------------------
 function boot() {
   setupPanelInfo();
-  setAuthMode('signin');
+  initInsights();
+  initAuth();
+  initSettings({
+    exportBackup: exportJSON,
+    prepareImport,
+    toast: showToast,
+    // Stop anything that would write to the account while it is being deleted.
+    beforeDelete: pausePublishing,
+    afterDeleteFailed: resumePublishing,
+  });
+  initFriends({
+    toast: showToast,
+    goSettings: () => switchView('settings'),
+    getMine: () => ({
+      handicap: calc(eligible()).handicap,
+      mode: settings.useCourseRatings ? 'differential' : 'overPar',
+    }),
+  });
   if (!fb.configured) {
     showAuth('setup');
     return;

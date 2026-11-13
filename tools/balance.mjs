@@ -197,7 +197,7 @@ function main() {
   }
   if (args.includes('--json')) { console.log(JSON.stringify(results, null, 2)); return; }
   const f = (v, d = 1) => v.toFixed(d).padStart(7);
-  console.log('HANDI Golf balance: ' + n + ' holes, seed "' + seed + '"\n');
+  console.log('Handi Golf balance: ' + n + ' holes, seed "' + seed + '"\n');
   console.log('profile  jitter   avg/par  birdie%    par%  bogey%  dbl+%   GIR%  OB/drv%  OB/shot% water/shot% holeout% pickup% putts/green 1-putt% 3-putt%   par3   par4   par5');
   for (const r of results) {
     console.log(r.profile.padEnd(8) + String(r.jitterMs + 'ms').padStart(6) + '  ' + (r.avgVsPar >= 0 ? '+' : '') + r.avgVsPar.toFixed(2).padStart(6)

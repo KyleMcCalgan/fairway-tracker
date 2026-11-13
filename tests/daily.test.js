@@ -118,9 +118,9 @@ test('streak counts consecutive UTC days and is idempotent', () => {
 test('share text has scores only: no seeds, yardages or hole details', () => {
   const text = shareText(DATE, [4, 3, 5], [3, 3, 7], 4);
   const lines = text.split('\n');
-  assert.equal(lines[0], 'HANDI Golf Daily 2026-11-13');
+  assert.equal(lines[0], 'Handi Golf Daily 2026-11-13');
   assert.equal(lines[1], '13 strokes (+1)');
-  assert.equal(lines[2].split(' ').length, 3);
+  assert.equal(lines[2], '−1  E  +2'); // each hole versus par, no pars or hole details
   assert.match(lines[3], /4 day streak/);
   assert.ok(!/seed|yds|yard|par \d|bunker|water|wind/i.test(text));
   assert.equal(shareText(DATE, [3, 4, 5], [3, 4, 5], 1).split('\n').length, 3);

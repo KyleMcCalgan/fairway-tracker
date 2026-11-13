@@ -573,17 +573,32 @@ export function createPlay(root, cfg) {
   };
 }
 
-// Result card shown over the map when a hole ends.
-export function resultCard({ title, lines, extra, actions }) {
+// Colour family for a hole result: eagle, birdie, par, bogey, double or bad.
+export function toneFor(strokes, par, state) {
+  if (state && state.pickedUp) return 'bad';
+  if (strokes === 1) return 'eagle';
+  const d = strokes - par;
+  return d <= -2 ? 'eagle' : d === -1 ? 'birdie' : d === 0 ? 'par' : d === 1 ? 'bogey' : d === 2 ? 'double' : 'bad';
+}
+
+// Result card shown over the map when a hole ends. A coloured header says how
+// it went, tiles give the numbers, then any notes and the actions.
+//   { title, tone, subtitle, tiles: [[label, value], ...], lines, extra, actions }
+export function resultCard({ title, tone, subtitle, tiles, lines, extra, actions }) {
   const btns = (actions || []).map((a) => {
     const b = h('button', { class: 'hg-btn' + (a.primary ? ' hg-primary' : ''), type: 'button', text: a.label });
     if (a.primary) b.setAttribute('data-primary', '');
     b.addEventListener('click', a.onClick);
     return b;
   });
-  return h('div', { class: 'hg-card', role: 'group', 'aria-label': 'Hole result' },
-    h('h2', { text: title }),
-    (lines || []).map((l) => h('p', { text: l })),
-    extra || null,
-    h('div', { class: 'hg-actions' }, btns));
+  return h('div', { class: 'hg-card hg-tone-' + (tone || 'par'), role: 'group', 'aria-label': 'Hole result' },
+    h('div', { class: 'hg-card-head' },
+      h('h2', { text: title }),
+      subtitle ? h('p', { text: subtitle }) : null),
+    h('div', { class: 'hg-card-body' },
+      tiles && tiles.length ? h('div', { class: 'hg-tiles' }, tiles.map(([k, v]) =>
+        h('div', { class: 'hg-tile' }, h('b', { text: String(v) }), h('span', { text: k })))) : null,
+      (lines || []).map((l) => h('p', { class: 'hg-note', text: l })),
+      extra || null,
+      h('div', { class: 'hg-actions' }, btns)));
 }

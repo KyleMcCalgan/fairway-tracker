@@ -25,6 +25,11 @@ import {
   signInWithEmailAndPassword,
   sendPasswordResetEmail,
   signOut,
+  EmailAuthProvider,
+  reauthenticateWithCredential,
+  reauthenticateWithPopup,
+  updatePassword,
+  deleteUser,
 } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
 import {
   initializeFirestore,
@@ -33,6 +38,10 @@ import {
   persistentMultipleTabManager,
   doc,
   collection,
+  getDoc,
+  getDocs,
+  query,
+  where,
   onSnapshot,
   writeBatch,
   deleteDoc,
@@ -78,6 +87,84 @@ export const createAccount = (email, password) => createUserWithEmailAndPassword
 export const sendReset = (email) => sendPasswordResetEmail(auth, email);
 export const logOut = () => signOut(auth);
 
+/* -------------------------------------------------------------- account */
+
+/** Who is signed in and how: { uid, email, hasPassword, hasGoogle }, or null. */
+export function accountInfo() {
+  const user = auth && auth.currentUser;
+  if (!user) return null;
+  const ids = (user.providerData || []).map((p) => p.providerId);
+  return {
+    uid: user.uid,
+    email: user.email || '',
+    hasPassword: ids.includes('password'),
+    hasGoogle: ids.includes('google.com'),
+  };
+}
+
+/**
+ * Proves it is really the account owner (Firebase asks for this before changing a password or
+ * deleting an account). Password accounts re-enter the password; Google accounts get the popup.
+ */
+export async function reauthenticate(password) {
+  const user = auth.currentUser;
+  if (!user) throw Object.assign(new Error('You are signed out.'), { code: 'auth/no-current-user' });
+  const info = accountInfo();
+  if (info.hasPassword) {
+    if (!password) throw Object.assign(new Error('Enter your password.'), { code: 'auth/missing-password' });
+    await reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email, password));
+  } else {
+    await reauthenticateWithPopup(user, new GoogleAuthProvider());
+  }
+}
+
+export async function changePassword(currentPassword, newPassword) {
+  await reauthenticate(currentPassword);
+  await updatePassword(auth.currentUser, newPassword);
+}
+
+async function deleteAll(refs) {
+  for (let i = 0; i < refs.length; i += 400) {
+    const batch = writeBatch(db);
+    refs.slice(i, i + 400).forEach((ref) => batch.delete(ref));
+    await batch.commit();
+  }
+}
+
+/**
+ * Deletes everything the signed-in user owns, then the account itself. Call reauthenticate()
+ * first so a "needs recent sign-in" failure happens before any data is touched.
+ *
+ * Left behind on purpose: courses this user added (other people's rounds point at them), and
+ * Daily results, which are create-only. Once the friendships are gone nobody can read those results.
+ */
+export async function deleteAccount() {
+  const user = auth.currentUser;
+  if (!user) throw Object.assign(new Error('You are signed out.'), { code: 'auth/no-current-user' });
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+    throw new Error('You need to be online to delete your account.');
+  }
+  const uid = user.uid;
+
+  // If this read fails, stop before deleting anything; otherwise a friend code
+  // could be left behind pointing at a deleted account.
+  const profile = await getDoc(doc(db, 'users', uid, 'game', 'profile'));
+  const code = profile.exists() ? profile.data().code || null : null;
+
+  const refs = [];
+  for (const name of ['rounds', 'myCourses', 'game']) {
+    const snap = await getDocs(collection(db, 'users', uid, name));
+    snap.docs.forEach((d) => refs.push(d.ref));
+  }
+  const friendships = await getDocs(query(collection(db, 'friendships'), where('users', 'array-contains', uid)));
+  friendships.docs.forEach((d) => refs.push(d.ref));
+  if (code) refs.push(doc(db, 'friendCodes', code));
+  refs.push(doc(db, 'sharedStats', uid), doc(db, 'users', uid));
+
+  await deleteAll(refs);
+  await deleteUser(user);
+}
+
 const ERROR_MESSAGES = {
   'auth/invalid-credential': 'That email and password do not match an account.',
   'auth/invalid-email': 'Enter a valid email address.',
@@ -93,6 +180,10 @@ const ERROR_MESSAGES = {
   'auth/unauthorized-domain':
     'This site address is not authorised in Firebase (Authentication → Settings → Authorized domains).',
   'auth/operation-not-allowed': 'This sign-in method is not enabled in Firebase yet.',
+  'auth/wrong-password': 'That password is not correct.',
+  'auth/requires-recent-login': 'For your security, please sign in again and then retry.',
+  'auth/user-mismatch': 'That does not match the account you are signed in with.',
+  'auth/no-current-user': 'You are signed out. Sign in again and retry.',
   'permission-denied':
     'Permission denied. The Firestore security rules may not be published yet (see the README).',
 };

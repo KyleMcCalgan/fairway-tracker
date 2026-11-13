@@ -3,7 +3,7 @@
 
 import { generateHole } from '../generate.js';
 import { scoreName } from '../rules.js';
-import { h, createPlay, resultCard, openDialog, formatVsPar } from '../ui.js';
+import { h, createPlay, resultCard, openDialog, formatVsPar, toneFor } from '../ui.js';
 
 export function emptyLifetime() {
   return {
@@ -94,15 +94,13 @@ export function createEndless(root, env) {
     try { await storage.saveLifetime(lifetime); } catch (e) { console.warn('could not save stats', e); }
     if (!alive) return;
     updateBar();
-    const parts = [state.shots.length + (state.shots.length === 1 ? ' shot' : ' shots')];
-    if (state.putts) parts.push(state.putts + (state.putts === 1 ? ' putt' : ' putts'));
-    if (state.penalties) parts.push(state.penalties + (state.penalties === 1 ? ' penalty' : ' penalties'));
     play.showCard(resultCard({
       title: scoreName(state.strokes, hole.par, state),
+      tone: toneFor(state.strokes, hole.par, state),
+      subtitle: state.strokes + (state.strokes === 1 ? ' stroke' : ' strokes') + ' on a par ' + hole.par,
+      tiles: [['Shots', state.shots.length], ['Putts', state.putts], ['Penalties', state.penalties]],
       lines: [
-        state.strokes + ' on a par ' + hole.par + ' (' + parts.join(', ') + ')',
-        'Session: ' + formatVsPar(sessionVsPar()) + ' after ' + session.length + (session.length === 1 ? ' hole' : ' holes'),
-        'Seed: ' + hole.seed,
+        'Session ' + formatVsPar(sessionVsPar()) + ' after ' + session.length + (session.length === 1 ? ' hole' : ' holes') + '  ·  Seed ' + hole.seed,
       ],
       actions: [
         { label: 'Next hole', primary: true, onClick: () => nextHole() },
@@ -113,10 +111,11 @@ export function createEndless(root, env) {
 
   function showCard() {
     const rows = session.map((r, i) => h('tr', null,
-      h('td', { text: String(i + 1) }), h('td', { text: String(r.par) }), h('td', { text: String(r.strokes) }),
+      h('td', { text: String(i + 1) }), h('td', { text: String(r.par) }),
+      h('td', null, h('span', { class: 'hg-chip-score hg-tone-' + toneFor(r.strokes, r.par, r.state), text: String(r.strokes) })),
       h('td', { text: scoreName(r.strokes, r.par, r.state) }), h('td', { class: 'hg-mono', text: r.seed })));
     const body = session.length
-      ? h('table', { class: 'hg-table' },
+      ? h('table', { class: 'hg-table hg-scorecard' },
         h('thead', null, h('tr', null, ['Hole', 'Par', 'Score', 'Result', 'Seed'].map((t) => h('th', { scope: 'col', text: t })))),
         h('tbody', null, rows),
         h('tfoot', null, h('tr', null, h('th', { scope: 'row', text: 'Total' }),
@@ -130,18 +129,21 @@ export function createEndless(root, env) {
   function showStats() {
     const s = lifetime;
     const avg = s.holes ? (s.strokes - s.par) / s.holes : 0;
-    const rows = [
+    const hero = [
       ['Holes played', s.holes],
-      ['Average versus par', s.holes ? (avg >= 0 ? '+' : '−') + Math.abs(avg).toFixed(2) : '–'],
-      ['Best streak of par or better', s.bestStreak],
+      ['Average vs par', s.holes ? (avg >= 0 ? '+' : '−') + Math.abs(avg).toFixed(2) : '–'],
+    ];
+    const rows = [
+      ['Best par-or-better streak', s.bestStreak],
       ['Birdies', s.birdies],
       ['Eagles or better', s.eagles],
       ['Holes-in-one', s.holesInOne],
       ['Out of bounds', s.ob],
       ['Water balls', s.water],
     ];
-    openDialog(root, 'Lifetime stats', h('dl', { class: 'hg-stats' },
-      rows.map(([k, v]) => [h('dt', { text: k }), h('dd', { text: String(v) })])));
+    const tile = ([k, v], cls) => h('div', { class: 'hg-stat ' + cls }, h('b', { text: String(v) }), h('span', { text: k }));
+    openDialog(root, 'Lifetime stats', h('div', { class: 'hg-statgrid' },
+      hero.map((r) => tile(r, 'hg-stat-hero')), rows.map((r) => tile(r, ''))));
   }
 
   function showSeed() {
