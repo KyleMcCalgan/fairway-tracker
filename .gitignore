@@ -1,0 +1,10 @@
+# Personal data exports: never commit these
+fairway-data*.json
+fairway-golf-backup-*.json
+backup/
+
+# Editor / OS noise
+.vscode/
+.DS_Store
+Thumbs.db
+node_modules/

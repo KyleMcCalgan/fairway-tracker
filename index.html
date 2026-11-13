@@ -1,0 +1,847 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Fairway — Golf handicap tracker</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9B%B3%3C/text%3E%3C/svg%3E"
+    />
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+  <body>
+    <div class="auth" id="authScreen">
+      <div class="auth-card">
+        <div class="auth-brand"><span class="brandmark">⛳</span> Fairway</div>
+        <p class="auth-sub">Sign in to see your rounds, courses and handicap on any device.</p>
+        <div id="authForms" hidden>
+          <div class="tabbar auth-tabs">
+            <button type="button" class="active" data-auth-mode="signin">Sign in</button>
+            <button type="button" data-auth-mode="signup">Create account</button>
+          </div>
+          <form class="auth-form" id="authForm">
+            <div class="formfield">
+              <label for="authEmail">Email</label><input id="authEmail" type="email" autocomplete="email" required />
+            </div>
+            <div class="formfield">
+              <label for="authPassword">Password</label
+              ><input id="authPassword" type="password" autocomplete="current-password" minlength="6" required />
+            </div>
+            <div class="auth-error" id="authError" role="alert"></div>
+            <button class="btn primary wide" type="submit" id="authSubmit">Sign in</button>
+            <button class="link-btn" type="button" id="authForgot">Forgot password?</button>
+          </form>
+          <div class="auth-divider">or</div>
+          <button class="btn wide" type="button" id="authGoogle">Continue with Google</button>
+        </div>
+        <div id="authStatus" hidden>
+          <p class="auth-message" id="authMessage"></p>
+          <button class="btn" type="button" id="authSignOut" hidden>Sign out</button>
+        </div>
+      </div>
+    </div>
+    <div class="shell" hidden>
+      <aside class="sidebar" id="sidebar">
+        <div class="brand-row">
+          <div class="brand">
+            <span class="brandmark">⛳</span> Fairway<span
+              style="
+                font-size: 10px;
+                opacity: 0.6;
+                font-weight: 600;
+                letter-spacing: 0;
+                align-self: flex-end;
+                margin-bottom: 3px;
+              "
+              >TRACKER</span
+            >
+          </div>
+          <button
+            class="menu-toggle"
+            id="menuToggle"
+            type="button"
+            aria-controls="sidebarMenu"
+            aria-expanded="false"
+            aria-label="Open navigation menu"
+          >
+            <span class="menu-icon" aria-hidden="true">☰</span><span>Menu</span>
+          </button>
+        </div>
+        <div class="sidebar-menu" id="sidebarMenu">
+          <div class="nav-group">
+            <small>WORKSPACE</small><button class="nav active" data-view="dashboard">◫ &nbsp; Overview</button
+            ><button class="nav" data-view="rounds">▤ &nbsp; All rounds</button
+            ><button class="nav" data-view="forecast">◷ &nbsp; Handicap forecast</button
+            ><button class="nav" data-view="courses">
+              <span class="nav-icon" aria-hidden="true"
+                ><svg
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.6"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M3 14V2.5"></path>
+                  <path d="M3.5 3H12L9.5 5.1 12 7.2H3.5"></path>
+                  <path d="M2 14h12"></path></svg></span
+              >Courses</button
+            ><button class="nav" data-view="insights">▥ &nbsp; Statistics</button>
+          </div>
+          <div class="nav-group">
+            <small>GUIDE</small
+            ><button class="nav" data-view="guide">
+              <span class="nav-icon" aria-hidden="true"
+                ><svg
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.6"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <circle cx="8" cy="8" r="6"></circle>
+                  <path d="M8 7.2v4"></path>
+                  <circle cx="8" cy="4.8" r=".45" fill="currentColor" stroke="none"></circle></svg></span
+              >How this app works
+            </button>
+          </div>
+          <div class="nav-bottom">
+            <small>YOUR DATA</small><button class="nav" id="exportNav" type="button">Export backup</button
+            ><button class="nav" id="importNav" type="button">Import backup</button
+            ><button class="nav" id="signOutNav" type="button">Sign out</button>
+            <div class="save-hint" id="accountStatus" role="status" aria-live="polite"></div>
+          </div>
+        </div>
+      </aside>
+      <button class="menu-backdrop" id="menuBackdrop" type="button" aria-label="Close navigation menu" hidden></button>
+      <main class="main">
+        <div class="top">
+          <div>
+            <div class="eyebrow">Personal golf analytics</div>
+            <h1 id="pageTitle">Your performance at a glance</h1>
+            <div class="sub" id="pageSubtitle">Track every round. Understand every stroke.</div>
+          </div>
+          <div class="actions">
+            <button class="btn" id="estimateTop">↗ &nbsp; Score estimator</button
+            ><button class="btn primary" id="addTop">＋ &nbsp; Add round</button>
+          </div>
+        </div>
+        <div id="dataSourceNotice" class="note" role="status" style="margin: 0 0 18px" hidden></div>
+        <section id="dashboard" class="view active">
+          <div id="kpis" class="cards"></div>
+          <div id="dashboardModeNotice" class="mode-note" hidden></div>
+          <div class="panel mode-panel" style="margin-bottom: 18px">
+            <div class="panel-head">
+              <div>
+                <h2>Handicap calculation mode</h2>
+                <p>Choose how qualifying rounds are compared.</p>
+              </div>
+              <span class="pill" id="modeBadge">Over par</span>
+            </div>
+            <label class="toggle"
+              ><input id="ratingModeToggle" type="checkbox" /><span
+                ><strong>Use Course Rating and Slope Rating</strong>
+                <div class="hint">
+                  When on, saved values for each course are used across every round at that course.
+                </div></span
+              ></label
+            >
+            <div class="hint" style="margin-top: 10px">
+              Gross score differential = (gross score - course rating) x 113 / slope rating. This estimate does not
+              include hole-by-hole net double bogey adjustments or a daily playing conditions calculation.
+            </div>
+          </div>
+          <div class="grid">
+            <div class="panel">
+              <div class="panel-head">
+                <div>
+                  <h2>Handicap trend</h2>
+                  <p>The active score-count rule determines which rounds are included.</p>
+                </div>
+                <span class="pill">Estimated index</span>
+              </div>
+              <div class="chart" id="handicapChart"></div>
+              <div class="hint">Historical values use only qualifying rounds recorded up to each date.</div>
+            </div>
+            <div class="panel">
+              <div class="panel-head">
+                <div>
+                  <h2>Recent performance</h2>
+                  <p>Score over par, latest qualifying rounds</p>
+                </div>
+              </div>
+              <div class="chart" id="scoresChart"></div>
+              <div class="legend"><span>Over par (lower is better)</span></div>
+            </div>
+          </div>
+          <div class="grid">
+            <div class="panel">
+              <div class="panel-head">
+                <div>
+                  <h2>Scores used in current estimate</h2>
+                  <p>Ranked by the active score-count rule within the current window</p>
+                </div>
+                <button class="btn small" data-go="forecast">See expiry forecast →</button>
+              </div>
+              <div class="tablewrap" id="selectedScoresDashboard"></div>
+            </div>
+            <div class="panel">
+              <div class="panel-head">
+                <div>
+                  <h2>Next rounds to exit</h2>
+                  <p>Eligible rounds approaching the active window cutoff</p>
+                </div>
+              </div>
+              <div id="nextExpire"></div>
+              <hr class="hr" />
+              <h2 style="margin-bottom: 8px">What if I shoot…?</h2>
+              <p id="quickPrompt">Enter an over-par score for your next qualifying round.</p>
+              <div class="mini" style="margin: 15px 0">
+                <input
+                  id="quickScore"
+                  class="field"
+                  type="number"
+                  value="18"
+                  style="width: 120px"
+                  aria-label="Over-par score"
+                /><select id="quickCourse" class="field" hidden aria-label="Course for differential estimate"></select
+                ><button id="quickEstimate" class="btn primary">Estimate</button>
+              </div>
+              <div id="quickResult" class="hint"></div>
+            </div>
+          </div>
+        </section>
+        <section id="rounds" class="view">
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>Round history</h2>
+                <p>Every score from your original spreadsheet, including non-qualifying rounds</p>
+              </div>
+              <span id="roundsCount" class="pill"></span>
+            </div>
+            <div class="rowtop">
+              <input id="searchRounds" class="field search" placeholder="Search courses, dates, notes…" />
+              <div class="filters">
+                <select id="qualFilter" class="field">
+                  <option value="all">All round types</option>
+                  <option value="yes">Qualifying</option>
+                  <option value="no">Non-qualifying</option></select
+                ><select id="historySort" class="field">
+                  <option value="date-desc">Newest first</option>
+                  <option value="date-asc">Oldest first</option>
+                  <option value="over-asc">Best scores first</option>
+                  <option value="over-desc">Highest over par</option>
+                  <option value="course-asc">Course A–Z</option>
+                </select>
+              </div>
+            </div>
+            <div class="tablewrap" id="historyTable"></div>
+          </div>
+        </section>
+        <section id="forecast" class="view">
+          <div class="panel selection-panel" style="margin-bottom: 18px">
+            <div class="panel-head">
+              <div>
+                <h2>Score selection</h2>
+                <p>Choose the score-count rule used for your estimate.</p>
+              </div>
+              <span class="pill" id="selectionBadge">WHS schedule</span>
+            </div>
+            <label class="toggle"
+              ><input id="customSelectionToggle" type="checkbox" /><span
+                ><strong>Use custom best X of Y</strong>
+                <div class="hint">
+                  Set how many of your lowest values count, and how many recent qualifying rounds form the window.
+                </div></span
+              ></label
+            >
+            <div id="customSelectionFields" class="selection-controls" hidden>
+              <label
+                >Best X scores<input
+                  id="customBestCount"
+                  class="field"
+                  type="number"
+                  min="1"
+                  max="20"
+                  step="1"
+                  value="8" /></label
+              ><label
+                >Latest Y rounds<input
+                  id="customWindowCount"
+                  class="field"
+                  type="number"
+                  min="1"
+                  max="20"
+                  step="1"
+                  value="20" /></label
+              ><button class="btn primary" id="saveCustomSelection" type="button">Apply values</button>
+              <div id="selectionError" class="selection-error" role="alert" hidden></div>
+              <div class="hint">
+                X must be no greater than Y. Custom mode does not apply the official early-record offsets.
+              </div>
+            </div>
+            <div id="selectionSummary" class="hint selection-summary"></div>
+          </div>
+          <div id="forecastModeNotice" class="mode-note" hidden></div>
+          <div class="banner">
+            <strong>How the rolling window works.</strong> Each new qualifying round pushes the oldest qualifying round
+            out of the active window. Non-qualifying rounds (scrambles, partial rounds, etc.) do not move the window.
+            The active score-count rule determines which qualifying scores count toward your estimate.
+          </div>
+          <div class="cards" id="forecastKpis"></div>
+          <div class="panel" style="margin-bottom: 18px">
+            <div class="panel-head">
+              <div>
+                <h2>Counted scores — retirement watch</h2>
+                <p>See exactly how many qualifying rounds until each of your current best rounds leaves the window</p>
+              </div>
+            </div>
+            <div class="tablewrap" id="expiryTable"></div>
+          </div>
+          <div class="grid">
+            <div class="panel">
+              <div class="panel-head">
+                <div>
+                  <h2>Current window exit order</h2>
+                  <p>When each recorded round leaves the active window</p>
+                </div>
+              </div>
+              <div class="tablewrap" id="upcomingTable"></div>
+            </div>
+            <div class="panel">
+              <div class="panel-head">
+                <div>
+                  <h2>Replacement candidates</h2>
+                  <p>Next-lowest values outside the current count</p>
+                </div>
+              </div>
+              <div class="tablewrap" id="replacements"></div>
+              <div class="note" style="margin-top: 20px">
+                Replacement candidates change as old rounds expire and new rounds enter. A future score might be better
+                than the listed candidate.
+              </div>
+            </div>
+          </div>
+          <div class="panel scenario-panel">
+            <div class="panel-head">
+              <div>
+                <h2>Scenario simulator</h2>
+                <p id="scenarioPrompt">Try an over-par score for your next qualifying round.</p>
+              </div>
+            </div>
+            <div class="rowtop">
+              <div class="filters">
+                <label class="sr-only" id="scenarioScoreLabel" for="scenarioOver">Score over par</label
+                ><input
+                  id="scenarioOver"
+                  type="number"
+                  value="18"
+                  class="field"
+                  style="max-width: 120px"
+                  aria-label="Scenario over par"
+                /><select
+                  id="scenarioCourse"
+                  class="field"
+                  hidden
+                  aria-label="Course for differential scenario"
+                ></select
+                ><button class="btn primary" id="scenarioRun">Calculate scenario</button>
+              </div>
+            </div>
+            <div id="scenarioOutput"></div>
+          </div>
+        </section>
+        <section id="insights" class="view">
+          <div class="cards" id="insightKpis"></div>
+          <div id="insightsModeNotice" class="mode-note" hidden></div>
+          <div class="grid">
+            <div class="panel">
+              <div class="panel-head">
+                <div>
+                  <h2 id="statsScoreHeading">Scores across all qualifying rounds</h2>
+                  <p>Progression over time · hover for details, click to select a round</p>
+                </div>
+              </div>
+              <div class="chart interactive" id="allScoresChart"></div>
+              <div id="scorePointDetails" class="chart-detail" aria-live="polite">
+                <span class="hint">Hover a point for round details, or click one to inspect it.</span>
+              </div>
+            </div>
+            <div class="panel">
+              <div class="panel-head">
+                <div>
+                  <h2>Score distribution</h2>
+                  <p>Frequency of over-par scores</p>
+                </div>
+              </div>
+              <div class="chart interactive" id="distChart"></div>
+              <div id="distributionDetail" class="drilldown" aria-live="polite">
+                <span class="hint">Select a score range to see the rounds in it.</span>
+              </div>
+            </div>
+          </div>
+          <div class="grid">
+            <div class="panel">
+              <div class="panel-head">
+                <div>
+                  <h2>Course breakdown</h2>
+                  <p>Compare course results using the rounds selected below.</p>
+                </div>
+              </div>
+              <label class="toggle breakdown-toggle"
+                ><input id="includeExcludedRounds" type="checkbox" /><span
+                  ><strong>Include non-qualifying rounds</strong>
+                  <div class="hint">
+                    When on, excluded rounds appear in the course averages and best values here. They still do not
+                    affect the handicap calculation.
+                  </div></span
+                ></label
+              >
+              <div class="tablewrap" id="courseBreakdown"></div>
+            </div>
+            <div class="panel">
+              <div class="panel-head">
+                <div>
+                  <h2>Rounds by course</h2>
+                  <p>Most frequently played, including non-qualifying rounds</p>
+                </div>
+              </div>
+              <div id="courseBars"></div>
+            </div>
+          </div>
+        </section>
+        <section id="courses" class="view">
+          <div class="panel course-rating-panel">
+            <div class="panel-head">
+              <div>
+                <h2>Course ratings and slopes</h2>
+                <p>
+                  The courses you play. Values come from the shared catalogue; save your own to override them for your
+                  account only. If you play several tee sets at one venue, add each one as its own course.
+                </p>
+              </div>
+              <button class="btn primary small" id="addCourseBtn" type="button">＋ Add course</button>
+            </div>
+            <div id="courseRatingTable" class="tablewrap"></div>
+          </div>
+        </section>
+        <section id="guide" class="view">
+          <div class="guide-hero">
+            <div class="panel guide-panel guide-intro">
+              <div class="eyebrow">Fairway guide</div>
+              <h2>How the app turns rounds into an estimate</h2>
+              <p>
+                Fairway keeps your round history, compares scores using the method you choose, and shows which recent
+                results contribute to your estimate. It is a personal tracking tool; an official Handicap Index is
+                maintained through an authorized golf association or club.
+              </p>
+              <div class="guide-callout">
+                <strong>Estimate, not an official index.</strong> The app uses your entered gross score and does not
+                calculate every World Handicap System adjustment or safeguard.
+              </div>
+            </div>
+            <div class="panel guide-panel">
+              <div class="panel-head">
+                <div><h2>Where to find things</h2></div>
+              </div>
+              <div class="guide-content">
+                <dl class="guide-defs">
+                  <div>
+                    <dt>All rounds</dt>
+                    <dd>Search, sort, and edit your round history.</dd>
+                  </div>
+                  <div>
+                    <dt>Handicap forecast</dt>
+                    <dd>See the selected score-count rule, expiry order, and next-round scenarios.</dd>
+                  </div>
+                  <div>
+                    <dt>Statistics</dt>
+                    <dd>Explore score trends, distributions, and course comparisons.</dd>
+                  </div>
+                  <div>
+                    <dt>Courses</dt>
+                    <dd>Find or add the courses you play and set the rating and slope used for your handicap.</dd>
+                  </div>
+                </dl>
+              </div>
+            </div>
+          </div>
+          <div class="guide-grid">
+            <div class="panel guide-panel">
+              <div class="panel-head">
+                <div><h2>How the estimate is built</h2></div>
+              </div>
+              <div class="guide-content">
+                <ol class="guide-steps">
+                  <li>
+                    <span>1</span>
+                    <div>
+                      <strong>Record a round</strong>
+                      <p>Only rounds marked as qualifying enter the handicap window.</p>
+                    </div>
+                  </li>
+                  <li>
+                    <span>2</span>
+                    <div>
+                      <strong>Compare its value</strong>
+                      <p>
+                        Over Par mode uses gross score minus par. Rating + Slope mode converts the entered gross score
+                        to an estimated differential.
+                      </p>
+                    </div>
+                  </li>
+                  <li>
+                    <span>3</span>
+                    <div>
+                      <strong>Use the lower values</strong>
+                      <p>
+                        The default score-count schedule selects the lowest available values from your latest
+                        qualifying-round window, then averages them.
+                      </p>
+                    </div>
+                  </li>
+                  <li>
+                    <span>4</span>
+                    <div>
+                      <strong>Let the window roll</strong>
+                      <p>
+                        Each new qualifying round moves the window forward. The oldest round in that window leaves
+                        first; non-qualifying rounds do not move it.
+                      </p>
+                    </div>
+                  </li>
+                </ol>
+              </div>
+            </div>
+            <div class="panel guide-panel">
+              <div class="panel-head">
+                <div><h2>Course Rating and Slope</h2></div>
+              </div>
+              <div class="guide-content">
+                <p>
+                  <strong>Course Rating</strong> is the expected score for a scratch golfer on a particular set of tees
+                  under normal conditions. <strong>Slope Rating</strong> describes how much harder those tees play for a
+                  bogey golfer relative to a scratch golfer. A slope of 113 is the standard reference point.
+                </p>
+                <div class="guide-formula">App differential = (gross score - Course Rating) x 113 / Slope Rating</div>
+                <p>
+                  For example, a gross 90 on tees rated 72.0 with a slope of 120 gives an app differential of 17.0. The
+                  official WHS calculation starts from an adjusted gross score and may include a Playing Conditions
+                  Calculation (PCC).
+                </p>
+                <a
+                  href="https://www.whs.com/articles/2019/course-slope-rating.html"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  >WHS: Course Rating and Slope Rating</a
+                >
+              </div>
+            </div>
+            <div class="panel guide-panel">
+              <div class="panel-head">
+                <div><h2>Default WHS score-count schedule</h2></div>
+              </div>
+              <div class="guide-content">
+                <p>
+                  The app uses this count schedule when custom best X of Y is off. The early-record adjustment is
+                  applied only in Rating + Slope mode.
+                </p>
+                <div class="guide-table-wrap">
+                  <table class="table guide-table">
+                    <thead>
+                      <tr>
+                        <th>Usable scores</th>
+                        <th>Lowest values averaged</th>
+                        <th>Adjustment*</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>3</td>
+                        <td>1</td>
+                        <td>-2.0</td>
+                      </tr>
+                      <tr>
+                        <td>4</td>
+                        <td>1</td>
+                        <td>-1.0</td>
+                      </tr>
+                      <tr>
+                        <td>5</td>
+                        <td>1</td>
+                        <td>0.0</td>
+                      </tr>
+                      <tr>
+                        <td>6</td>
+                        <td>2</td>
+                        <td>-1.0</td>
+                      </tr>
+                      <tr>
+                        <td>7-8</td>
+                        <td>2</td>
+                        <td>0.0</td>
+                      </tr>
+                      <tr>
+                        <td>9-11</td>
+                        <td>3</td>
+                        <td>0.0</td>
+                      </tr>
+                      <tr>
+                        <td>12-14</td>
+                        <td>4</td>
+                        <td>0.0</td>
+                      </tr>
+                      <tr>
+                        <td>15-16</td>
+                        <td>5</td>
+                        <td>0.0</td>
+                      </tr>
+                      <tr>
+                        <td>17-18</td>
+                        <td>6</td>
+                        <td>0.0</td>
+                      </tr>
+                      <tr>
+                        <td>19</td>
+                        <td>7</td>
+                        <td>0.0</td>
+                      </tr>
+                      <tr>
+                        <td>20</td>
+                        <td>8</td>
+                        <td>0.0</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <p>
+                  *The adjustment is applied to the average. With fewer than 3 usable values, the default mode shows no
+                  estimate.
+                </p>
+              </div>
+            </div>
+            <div class="panel guide-panel">
+              <div class="panel-head">
+                <div><h2>Custom score selection</h2></div>
+              </div>
+              <div class="guide-content">
+                <p>
+                  Turn on <strong>Use custom best X of Y</strong> in Handicap Forecast to choose how many of your lowest
+                  values count and how many recent qualifying rounds form the window. For example, best 5 of latest 12
+                  uses up to five lowest available values from those 12 qualifying rounds.
+                </p>
+                <p>
+                  Custom selection replaces the default count schedule and does not apply the early-record adjustment.
+                  Rounds without a saved course profile do not provide a differential while Rating + Slope mode is
+                  active.
+                </p>
+              </div>
+            </div>
+            <div class="panel guide-panel">
+              <div class="panel-head">
+                <div><h2>What the app leaves out</h2></div>
+              </div>
+              <div class="guide-content">
+                <ul>
+                  <li>Hole-by-hole net double bogey limits used to create an adjusted gross score.</li>
+                  <li>The daily Playing Conditions Calculation.</li>
+                  <li>Low Handicap Index caps, exceptional-score reductions, and committee adjustments.</li>
+                  <li>Course Handicap or Playing Handicap for a specific game or format.</li>
+                </ul>
+                <p>These details can make an official Handicap Index differ from the app's estimate.</p>
+                <a
+                  href="https://www.randa.org/roh/the-rules-of-handicapping/rule-5"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  >The R&amp;A Rules of Handicapping: Rule 5</a
+                >
+              </div>
+            </div>
+            <div class="panel guide-panel">
+              <div class="panel-head">
+                <div><h2>Entering course values and saving data</h2></div>
+              </div>
+              <div class="guide-content">
+                <p>
+                  Courses are shared. When you add a course, everyone using the app can find it and use the same Course
+                  Rating and Slope Rating, so check the Courses page before creating a duplicate. If a value looks wrong
+                  for you, enter your own: your values apply only to your account, and to every round you have at that
+                  course.
+                </p>
+                <p>
+                  Enter Course Rating and Slope Rating for the exact tees you played. If you use multiple tee sets at
+                  the same venue, add each set as its own course, for example “Royal Durban – White tees”.
+                </p>
+                <p>
+                  Your rounds, courses and settings are saved to your account, so they are there whenever you sign in.
+                  Export and import under Your Data remain available as backups.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+    <div class="modal-backdrop" id="roundOverlay">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="roundTitle">
+        <div class="modal-header">
+          <h2 id="roundTitle">Add a round</h2>
+          <button class="iconbtn" data-close="roundOverlay" aria-label="Close">×</button>
+        </div>
+        <form id="roundForm">
+          <input type="hidden" id="editId" />
+          <div class="formgrid">
+            <div class="formfield"><label for="date">Date</label><input type="date" id="date" required /></div>
+            <div class="formfield">
+              <label for="course">Golf course</label
+              ><input
+                id="course"
+                type="text"
+                list="courseSuggestions"
+                maxlength="80"
+                autocomplete="off"
+                placeholder="Start typing a course name"
+                required
+              /><datalist id="courseSuggestions"></datalist
+              ><button class="link-btn" type="button" id="newCourseBtn">Can’t find it? Find or add a course</button>
+            </div>
+            <div class="formfield">
+              <label for="score">Gross score</label><input type="number" id="score" min="1" max="999" required />
+            </div>
+            <div class="formfield">
+              <label for="par">Course / round par</label
+              ><input type="number" id="par" min="1" max="200" value="72" required />
+            </div>
+            <div
+              class="formfield full"
+              id="overPreview"
+              style="background: #f2f7f2; padding: 11px; border-radius: 9px; color: #367150; font-weight: 800"
+            >
+              Over par: —
+            </div>
+            <div class="formfield full">
+              <label class="toggle"
+                ><input id="qualifying" type="checkbox" checked /><span
+                  ><strong>Include in handicap calculation</strong>
+                  <div class="hint">
+                    Turn off for scrambles, partial rounds, social formats or scores you don't want counted.
+                  </div></span
+                ></label
+              >
+            </div>
+            <div class="formfield full">
+              <label for="notes">Notes / format (optional)</label
+              ><textarea
+                id="notes"
+                rows="2"
+                maxlength="500"
+                placeholder="e.g. Scramble, 9 holes, playing partner…"
+              ></textarea>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn danger" type="button" id="deleteRound" style="display: none">Delete round</button>
+            <div style="margin-left: auto">
+              <button class="btn" type="button" data-close="roundOverlay">Cancel</button
+              ><button class="btn primary" type="submit">Save round</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+    <div class="modal-backdrop" id="courseOverlay">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="courseTitle">
+        <div class="modal-header">
+          <h2 id="courseTitle">Find or add a course</h2>
+          <button class="iconbtn" data-close="courseOverlay" aria-label="Close">×</button>
+        </div>
+        <form id="courseForm">
+          <div class="formgrid">
+            <div class="formfield full">
+              <label for="courseName">Course name</label
+              ><input
+                id="courseName"
+                type="text"
+                maxlength="80"
+                autocomplete="off"
+                placeholder="e.g. Royal Durban Golf Club"
+                required
+              />
+            </div>
+            <div class="formfield full" id="courseMatches"></div>
+            <div class="formfield full" id="courseValues">
+              <div class="formgrid">
+                <div class="formfield">
+                  <label for="courseRating">Course Rating (optional)</label
+                  ><input id="courseRating" type="number" min="50" max="90" step="0.1" />
+                </div>
+                <div class="formfield">
+                  <label for="courseSlope">Slope Rating (optional)</label
+                  ><input id="courseSlope" type="number" min="55" max="155" step="1" />
+                </div>
+              </div>
+              <div class="hint">
+                New courses are shared with everyone using the app. If you leave the values blank, the first person to
+                save values for this course sets the shared ones. You can always use your own values for yourself on the
+                Courses page.
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <div style="margin-left: auto">
+              <button class="btn" type="button" data-close="courseOverlay">Cancel</button
+              ><button class="btn primary" type="submit" id="courseSubmit">Create course</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+    <div class="modal-backdrop" id="estimateOverlay">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="estimateTitle">
+        <div class="modal-header">
+          <h2 id="estimateTitle">Next-round estimator</h2>
+          <button class="iconbtn" data-close="estimateOverlay" aria-label="Close">×</button>
+        </div>
+        <div class="formgrid">
+          <div class="formfield">
+            <label id="estimateScoreLabel" for="estimateOver">Score over par</label
+            ><input id="estimateOver" type="number" value="18" />
+          </div>
+          <div class="formfield" id="estimateParWrap">
+            <label for="estimatePar">Par (optional context)</label
+            ><input id="estimatePar" type="number" min="1" value="71" />
+          </div>
+          <div class="formfield full" id="estimateCourseWrap" hidden>
+            <label for="estimateCourse">Course with saved rating and slope</label
+            ><select id="estimateCourse" class="field"></select>
+          </div>
+        </div>
+        <div id="estimateResult"></div>
+        <div class="modal-footer" style="justify-content: flex-end">
+          <button class="btn" data-close="estimateOverlay">Close</button
+          ><button class="btn primary" id="estimateCalculate">Recalculate</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-backdrop info-overlay" id="infoOverlay">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="infoTitle" aria-describedby="infoBody">
+        <div class="modal-header">
+          <h2 id="infoTitle">More information</h2>
+          <button class="iconbtn" id="infoClose" type="button" data-close="infoOverlay" aria-label="Close information">
+            ×
+          </button>
+        </div>
+        <div id="infoBody" class="info-body"></div>
+        <div class="modal-footer" style="justify-content: flex-end">
+          <button class="btn primary" type="button" data-close="infoOverlay">Done</button>
+        </div>
+      </div>
+    </div>
+    <input type="file" id="importFile" accept=".json,application/json" hidden />
+    <div id="toast" class="toast" role="status"></div>
+    <script type="module" src="js/app.js"></script>
+  </body>
+</html>
